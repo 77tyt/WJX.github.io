@@ -1,0 +1,1647 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>培训考核 - 有限空间作业安全风险动态管控平台</title>
+    <link rel="stylesheet" href="../style.css">
+    <style>
+        .training-container {
+            display: flex;
+            flex-direction: column;
+            height: calc(100vh - 120px);
+        }
+        .filter-card {
+            background-color: white;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 16px;
+            box-shadow: var(--shadow-sm);
+        }
+        .filter-bar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            align-items: flex-end;
+        }
+        .filter-item {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .filter-label {
+            font-size: 12px;
+            color: var(--text-light);
+        }
+        .table-card {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: var(--shadow-sm);
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .table-toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border-color);
+            flex-shrink: 0;
+        }
+        .table-info {
+            font-size: 13px;
+            color: var(--text-light);
+        }
+        .table-info strong {
+            color: var(--primary-color);
+        }
+        .table-actions {
+            display: flex;
+            gap: 8px;
+        }
+        .table-scroll-container {
+            flex: 1;
+            overflow-y: auto;
+        }
+        .table-scroll-container::-webkit-scrollbar {
+            width: 6px;
+        }
+        .table-scroll-container::-webkit-scrollbar-thumb {
+            background-color: #ccc;
+            border-radius: 3px;
+        }
+        .table-scroll-container::-webkit-scrollbar-track {
+            background-color: #f5f5f5;
+        }
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .data-table thead {
+            position: sticky;
+            top: 0;
+            background-color: #f8f9fa;
+            z-index: 10;
+        }
+        .data-table th {
+            padding: 12px 16px;
+            text-align: left;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-light);
+            border-bottom: 1px solid var(--border-color);
+            white-space: nowrap;
+        }
+        .data-table td {
+            padding: 12px 16px;
+            font-size: 13px;
+            color: var(--text-color);
+            border-bottom: 1px solid var(--border-color);
+        }
+        .data-table tbody tr:hover {
+            background-color: #f8f9fa;
+        }
+        .action-btns {
+            display: flex;
+            gap: 6px;
+        }
+        .action-btn {
+            padding: 4px 10px;
+            font-size: 11px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: none;
+        }
+        .action-btn.view {
+            background-color: rgba(49, 130, 206, 0.1);
+            color: var(--info-color);
+        }
+        .action-btn.edit {
+            background-color: rgba(26, 54, 93, 0.1);
+            color: var(--primary-color);
+        }
+        .action-btn:hover {
+            opacity: 0.8;
+        }
+        .pagination {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 16px;
+            padding: 12px;
+            flex-shrink: 0;
+        }
+        .pagination-btn {
+            padding: 8px 16px;
+            border: 1px solid var(--border-color);
+            background-color: white;
+            cursor: pointer;
+            font-size: 13px;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+        }
+        .pagination-btn:hover:not(:disabled) {
+            background-color: #f5f5f5;
+        }
+        .pagination-btn.active {
+            background-color: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+        .pagination-btn:disabled {
+            color: #ccc;
+            cursor: not-allowed;
+        }
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1500;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-overlay.show {
+            display: flex;
+        }
+        .modal-container {
+            background-color: white;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+        .modal-container.large {
+            max-width: 750px;
+        }
+        .modal-container.xlarge {
+            max-width: 900px;
+        }
+        .modal-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
+        }
+        .modal-title {
+            font-size: 16px;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: var(--text-light);
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+        }
+        .modal-close:hover {
+            background-color: #f5f5f5;
+        }
+        .modal-body {
+            padding: 20px;
+            overflow-y: auto;
+            flex: 1;
+        }
+        .modal-footer {
+            padding: 16px 20px;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            flex-shrink: 0;
+        }
+        .modal-form-row {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+        .modal-form-row.three-col {
+            grid-template-columns: repeat(3, 1fr);
+        }
+        .modal-form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .modal-form-group.full {
+            grid-column: span 2;
+        }
+        .modal-form-label {
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-color);
+        }
+        .modal-form-label .required {
+            color: var(--danger-color);
+        }
+        .status-tag {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 500;
+        }
+        .status-tag.success {
+            background-color: rgba(56, 161, 105, 0.1);
+            color: var(--success-color);
+        }
+        .status-tag.warning {
+            background-color: rgba(237, 137, 54, 0.1);
+            color: var(--warning-color);
+        }
+        .status-tag.danger {
+            background-color: rgba(229, 62, 62, 0.1);
+            color: var(--danger-color);
+        }
+        .status-tag.info {
+            background-color: rgba(49, 130, 206, 0.1);
+            color: var(--info-color);
+        }
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 60px;
+            color: var(--text-light);
+        }
+        .empty-state svg {
+            width: 48px;
+            height: 48px;
+            stroke: #ccc;
+            margin-bottom: 12px;
+        }
+        .empty-state span {
+            font-size: 14px;
+        }
+        .detail-section {
+            margin-bottom: 20px;
+            padding: 16px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+        }
+        .detail-section-title {
+            font-size: 14px;
+            font-weight: bold;
+            color: var(--primary-color);
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .detail-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+        }
+        .detail-item {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .detail-item-label {
+            font-size: 12px;
+            color: var(--text-light);
+        }
+        .detail-item-value {
+            font-size: 14px;
+            color: var(--text-color);
+            font-weight: 500;
+        }
+        .score-summary {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+        .score-item {
+            text-align: center;
+            padding: 16px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+        }
+        .score-label {
+            font-size: 12px;
+            color: var(--text-light);
+            margin-bottom: 8px;
+            display: block;
+        }
+        .score-value {
+            font-size: 28px;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+        .score-value.success {
+            color: var(--success-color);
+        }
+        .score-value.danger {
+            color: var(--danger-color);
+        }
+        .score-value.warning {
+            color: var(--warning-color);
+        }
+        .chart-container {
+            margin-bottom: 20px;
+        }
+        .chart-title {
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 12px;
+        }
+        .chart-bars {
+            display: flex;
+            justify-content: space-around;
+            align-items: flex-end;
+            height: 180px;
+            padding: 20px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+        }
+        .chart-bar {
+            width: 50px;
+            border-radius: 4px 4px 0 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-end;
+            padding-bottom: 8px;
+            position: relative;
+        }
+        .chart-bar-label {
+            position: absolute;
+            bottom: -25px;
+            font-size: 11px;
+            color: var(--text-light);
+        }
+        .chart-bar-value {
+            font-size: 12px;
+            font-weight: bold;
+            color: white;
+            margin-bottom: 4px;
+        }
+        .export-options {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        .export-option {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .export-option:hover {
+            border-color: var(--primary-color);
+            background-color: rgba(26, 54, 93, 0.05);
+        }
+        .export-option input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+        }
+        .export-option-label {
+            font-size: 13px;
+            color: var(--text-color);
+        }
+        .task-assign-section {
+            margin-top: 16px;
+            padding: 16px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+        }
+        .task-assign-title {
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 12px;
+            color: var(--primary-color);
+        }
+        .person-list {
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+        }
+        .person-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 12px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .person-item:last-child {
+            border-bottom: none;
+        }
+        .person-item:hover {
+            background-color: #f0f0f0;
+        }
+        .person-item input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+        }
+        .person-info {
+            flex: 1;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .person-name {
+            font-size: 13px;
+            font-weight: 500;
+        }
+        .person-dept {
+            font-size: 12px;
+            color: var(--text-light);
+        }
+        .select-all-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 12px;
+            background-color: #e8f4fd;
+            border-radius: 8px 8px 0 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .score-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 12px;
+        }
+        .score-table th,
+        .score-table td {
+            padding: 10px 12px;
+            text-align: left;
+            font-size: 13px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .score-table th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+            color: var(--text-light);
+        }
+        .score-table tbody tr:hover {
+            background-color: #f8f9fa;
+        }
+        .score-table-container {
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+        }
+        .training-progress {
+            margin-top: 12px;
+        }
+        .progress-bar {
+            height: 8px;
+            background-color: #e0e0e0;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            background-color: var(--success-color);
+            border-radius: 4px;
+            transition: width 0.3s ease;
+        }
+        .progress-text {
+            font-size: 12px;
+            color: var(--text-light);
+            margin-top: 4px;
+        }
+    </style>
+</head>
+<body>
+    <header class="top-bar">
+        <div class="top-bar-left">
+            <svg class="logo-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            </svg>
+            <h1 class="platform-title">有限空间作业安全风险动态管控平台</h1>
+        </div>
+        <div class="top-bar-center">
+            <div class="realtime-alert">
+                <span class="alert-pulse"></span>
+                <span class="alert-text">实时预警</span>
+                <span class="alert-count-badge danger">3</span>
+            </div>
+            <div class="current-time" id="currentTime"></div>
+        </div>
+        <div class="user-section">
+            <div class="role-switch">
+                <select id="roleSelector" class="role-select">
+                    <option value="admin">系统管理员</option>
+                    <option value="supervisor">安全主管</option>
+                    <option value="operator">作业人员</option>
+                </select>
+            </div>
+            <div class="user-avatar">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-2v2"/>
+                    <circle cx="12" cy="7" r="4"/>
+                </svg>
+            </div>
+            <span class="user-name">管理员</span>
+        </div>
+    </header>
+
+    <div class="container" style="margin-top: 56px;">
+        <nav class="sidebar" style="top: 56px;">
+            <div class="sidebar-header">
+                <span class="sidebar-title">功能导航</span>
+            </div>
+            <ul class="nav-menu">
+                <li class="nav-item">
+                    <a href="../index.html">
+                        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                            <polyline points="9 22 9 12 15 12 15 22"/>
+                        </svg>
+                        <span class="text">首页工作台</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="pre-work.html">
+                        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M9 11l3 3L22 4"/>
+                            <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+                        </svg>
+                        <span class="text">作业前管理</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="monitoring.html">
+                        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+                        </svg>
+                        <span class="text">实时监测</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="review.html">
+                        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="23 4 23 10 17 10"/>
+                            <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+                        </svg>
+                        <span class="text">复盘优化</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="ledger.html">
+                        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+                            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+                        </svg>
+                        <span class="text">台账管理</span>
+                    </a>
+                </li>
+                <li class="nav-item active">
+                    <a href="training.html">
+                        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M22 10v6M2 10l10-5 10 5-10 5z"/>
+                            <path d="M6 12v5c3 3 9 3 12 0v-5"/>
+                        </svg>
+                        <span class="text">培训考核</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="contractor.html">
+                        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                            <polyline points="9 22 9 12 15 12 15 22"/>
+                        </svg>
+                        <span class="text">承包商管理</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="evaluation.html">
+                        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26"/>
+                        </svg>
+                        <span class="text">安全生产考评</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="emergency.html">
+                        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2"/>
+                            <line x1="12" y1="8" x2="12" y2="12"/>
+                            <line x1="12" y1="16" x2="12.01" y2="16"/>
+                        </svg>
+                        <span class="text">应急处置</span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+
+        <main class="main-content" style="margin-right: 0;">
+            <div class="page-header">
+                <h2 class="page-title">培训考核管理</h2>
+                <div class="page-actions">
+                    <button class="btn primary" onclick="showAddTaskModal()">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 16px; height: 16px;">
+                            <line x1="12" y1="5" x2="12" y2="19"/>
+                            <line x1="5" y1="12" x2="19" y2="12"/>
+                        </svg>
+                        新增考核
+                    </button>
+                </div>
+            </div>
+
+            <div class="training-container">
+                <div class="filter-card">
+                    <div class="filter-bar">
+                        <div class="filter-item">
+                            <label class="filter-label">姓名</label>
+                            <input type="text" class="form-input" id="filterName" placeholder="请输入姓名" style="width: 140px;">
+                        </div>
+                        <div class="filter-item">
+                            <label class="filter-label">部门</label>
+                            <select class="form-select" id="filterDept" style="width: 140px;">
+                                <option value="">全部</option>
+                                <option value="生产部">生产部</option>
+                                <option value="安全部">安全部</option>
+                                <option value="设备部">设备部</option>
+                                <option value="质检部">质检部</option>
+                                <option value="仓储部">仓储部</option>
+                                <option value="行政部">行政部</option>
+                            </select>
+                        </div>
+                        <div class="filter-item">
+                            <label class="filter-label">考核状态</label>
+                            <select class="form-select" id="filterStatus" style="width: 120px;">
+                                <option value="">全部</option>
+                                <option value="通过">通过</option>
+                                <option value="未通过">未通过</option>
+                                <option value="待考核">待考核</option>
+                            </select>
+                        </div>
+                        <div class="filter-item" style="flex-direction: row; gap: 8px;">
+                            <button class="btn primary" onclick="doSearch()">查询</button>
+                            <button class="btn secondary" onclick="resetSearch()">重置</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="table-card">
+                    <div class="table-toolbar">
+                        <span class="table-info">共 <strong id="totalCount">0</strong> 条记录</span>
+                        <div class="table-actions">
+                            <button class="btn secondary" onclick="exportScores()">导出成绩</button>
+                        </div>
+                    </div>
+                    <div class="table-scroll-container">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th style="width: 60px;">序号</th>
+                                    <th>姓名</th>
+                                    <th>部门</th>
+                                    <th>岗位</th>
+                                    <th>培训课程</th>
+                                    <th>培训日期</th>
+                                    <th>考核成绩</th>
+                                    <th>考核结果</th>
+                                    <th>证书有效期</th>
+                                    <th style="width: 120px;">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="dataTableBody">
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="pagination">
+                        <button class="pagination-btn" onclick="changePage('prev')" id="prevBtn">&lt;</button>
+                        <div class="pagination-pages" id="paginationPages"></div>
+                        <button class="pagination-btn" onclick="changePage('next')" id="nextBtn">&gt;</button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div class="modal-overlay" id="viewModal">
+        <div class="modal-container large">
+            <div class="modal-header">
+                <h3 class="modal-title">培训考核详情查询</h3>
+                <button class="modal-close" onclick="closeViewModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="detail-section">
+                    <div class="detail-section-title">基本信息</div>
+                    <div class="detail-grid">
+                        <div class="detail-item">
+                            <span class="detail-item-label">姓名</span>
+                            <span class="detail-item-value" id="viewName">-</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-item-label">部门</span>
+                            <span class="detail-item-value" id="viewDept">-</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-item-label">岗位</span>
+                            <span class="detail-item-value" id="viewPosition">-</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-item-label">工号</span>
+                            <span class="detail-item-value" id="viewEmployeeId">-</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-item-label">联系电话</span>
+                            <span class="detail-item-value" id="viewPhone">-</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-item-label">入职日期</span>
+                            <span class="detail-item-value" id="viewJoinDate">-</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="detail-section">
+                    <div class="detail-section-title">培训信息</div>
+                    <div class="detail-grid">
+                        <div class="detail-item">
+                            <span class="detail-item-label">培训课程</span>
+                            <span class="detail-item-value" id="viewCourse">-</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-item-label">培训类型</span>
+                            <span class="detail-item-value" id="viewCourseType">-</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-item-label">培训日期</span>
+                            <span class="detail-item-value" id="viewDate">-</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-item-label">培训时长</span>
+                            <span class="detail-item-value" id="viewDuration">-</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-item-label">培训机构</span>
+                            <span class="detail-item-value" id="viewInstitution">-</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-item-label">培训讲师</span>
+                            <span class="detail-item-value" id="viewInstructor">-</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-item-label">培训地点</span>
+                            <span class="detail-item-value" id="viewLocation">-</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-item-label">培训方式</span>
+                            <span class="detail-item-value" id="viewMethod">-</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="detail-section">
+                    <div class="detail-section-title">考核信息</div>
+                    <div class="detail-grid">
+                        <div class="detail-item">
+                            <span class="detail-item-label">考核成绩</span>
+                            <span class="detail-item-value" id="viewScore">-</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-item-label">考核结果</span>
+                            <span class="detail-item-value" id="viewResult">-</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-item-label">考核日期</span>
+                            <span class="detail-item-value" id="viewExamDate">-</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-item-label">考核方式</span>
+                            <span class="detail-item-value" id="viewExamMethod">-</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-item-label">证书编号</span>
+                            <span class="detail-item-value" id="viewCertNo">-</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-item-label">证书有效期</span>
+                            <span class="detail-item-value" id="viewExpiry">-</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="detail-section">
+                    <div class="detail-section-title">学习进度</div>
+                    <div class="training-progress">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                            <span style="font-size: 13px;">课程完成度</span>
+                            <span style="font-size: 13px; font-weight: bold;" id="viewProgress">-</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="viewProgressBar" style="width: 0%;"></div>
+                        </div>
+                    </div>
+                    <div style="margin-top: 16px;">
+                        <div style="font-size: 13px; margin-bottom: 8px;">学习记录：</div>
+                        <div id="viewStudyLog" style="font-size: 12px; color: var(--text-light); line-height: 1.8;"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn secondary" onclick="closeViewModal()">关闭</button>
+                <button class="btn primary" onclick="editFromView()">编辑</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="editModal">
+        <div class="modal-container large">
+            <div class="modal-header">
+                <h3 class="modal-title">编辑培训记录</h3>
+                <button class="modal-close" onclick="closeEditModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form class="modal-form" id="editForm">
+                    <div class="modal-form-row">
+                        <div class="modal-form-group">
+                            <label class="modal-form-label">姓名 <span class="required">*</span></label>
+                            <input type="text" class="form-input" id="editName" placeholder="请输入姓名">
+                        </div>
+                        <div class="modal-form-group">
+                            <label class="modal-form-label">部门 <span class="required">*</span></label>
+                            <select class="form-select" id="editDept">
+                                <option value="">请选择</option>
+                                <option value="生产部">生产部</option>
+                                <option value="安全部">安全部</option>
+                                <option value="设备部">设备部</option>
+                                <option value="质检部">质检部</option>
+                                <option value="仓储部">仓储部</option>
+                                <option value="行政部">行政部</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="modal-form-row">
+                        <div class="modal-form-group">
+                            <label class="modal-form-label">岗位</label>
+                            <input type="text" class="form-input" id="editPosition" placeholder="请输入岗位">
+                        </div>
+                        <div class="modal-form-group">
+                            <label class="modal-form-label">培训课程 <span class="required">*</span></label>
+                            <select class="form-select" id="editCourse">
+                                <option value="">请选择</option>
+                                <option value="有限空间作业安全培训">有限空间作业安全培训</option>
+                                <option value="应急救援培训">应急救援培训</option>
+                                <option value="消防安全培训">消防安全培训</option>
+                                <option value="职业健康培训">职业健康培训</option>
+                                <option value="特种作业培训">特种作业培训</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="modal-form-row">
+                        <div class="modal-form-group">
+                            <label class="modal-form-label">培训日期 <span class="required">*</span></label>
+                            <input type="date" class="form-input" id="editDate">
+                        </div>
+                        <div class="modal-form-group">
+                            <label class="modal-form-label">考核成绩</label>
+                            <input type="number" class="form-input" id="editScore" placeholder="请输入考核成绩" min="0" max="100">
+                        </div>
+                    </div>
+                    <div class="modal-form-row">
+                        <div class="modal-form-group">
+                            <label class="modal-form-label">考核结果</label>
+                            <select class="form-select" id="editResult">
+                                <option value="待考核">待考核</option>
+                                <option value="通过">通过</option>
+                                <option value="未通过">未通过</option>
+                            </select>
+                        </div>
+                        <div class="modal-form-group">
+                            <label class="modal-form-label">证书有效期</label>
+                            <input type="date" class="form-input" id="editExpiry">
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn secondary" onclick="closeEditModal()">取消</button>
+                <button class="btn primary" onclick="saveEdit()">保存</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="addTaskModal">
+        <div class="modal-container xlarge">
+            <div class="modal-header">
+                <h3 class="modal-title">新增考核任务</h3>
+                <button class="modal-close" onclick="closeAddTaskModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form class="modal-form" id="addTaskForm">
+                    <div class="modal-form-row">
+                        <div class="modal-form-group">
+                            <label class="modal-form-label">考核名称 <span class="required">*</span></label>
+                            <input type="text" class="form-input" id="taskName" placeholder="请输入考核名称">
+                        </div>
+                        <div class="modal-form-group">
+                            <label class="modal-form-label">考核类型 <span class="required">*</span></label>
+                            <select class="form-select" id="taskType">
+                                <option value="">请选择</option>
+                                <option value="有限空间作业安全培训">有限空间作业安全培训</option>
+                                <option value="应急救援培训">应急救援培训</option>
+                                <option value="消防安全培训">消防安全培训</option>
+                                <option value="职业健康培训">职业健康培训</option>
+                                <option value="特种作业培训">特种作业培训</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="modal-form-row">
+                        <div class="modal-form-group">
+                            <label class="modal-form-label">考核开始日期 <span class="required">*</span></label>
+                            <input type="date" class="form-input" id="taskStartDate">
+                        </div>
+                        <div class="modal-form-group">
+                            <label class="modal-form-label">考核截止日期 <span class="required">*</span></label>
+                            <input type="date" class="form-input" id="taskEndDate">
+                        </div>
+                    </div>
+                    <div class="modal-form-row">
+                        <div class="modal-form-group">
+                            <label class="modal-form-label">及格分数</label>
+                            <input type="number" class="form-input" id="taskPassScore" placeholder="默认60分" min="0" max="100" value="60">
+                        </div>
+                        <div class="modal-form-group">
+                            <label class="modal-form-label">考核时长(分钟)</label>
+                            <input type="number" class="form-input" id="taskDuration" placeholder="请输入考核时长" min="10" value="60">
+                        </div>
+                    </div>
+                    <div class="modal-form-row">
+                        <div class="modal-form-group full">
+                            <label class="modal-form-label">考核说明</label>
+                            <textarea class="form-input" id="taskDescription" rows="3" placeholder="请输入考核说明"></textarea>
+                        </div>
+                    </div>
+                    
+                    <div class="task-assign-section">
+                        <div class="task-assign-title">选择考核人员</div>
+                        <div class="select-all-bar">
+                            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                                <input type="checkbox" id="selectAllPersons" onchange="toggleSelectAll()">
+                                <span style="font-size: 13px; font-weight: 500;">全选</span>
+                            </label>
+                            <span style="font-size: 12px; color: var(--text-light);">已选择 <strong id="selectedCount">0</strong> 人</span>
+                        </div>
+                        <div class="person-list" id="personList">
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn secondary" onclick="closeAddTaskModal()">取消</button>
+                <button class="btn primary" onclick="saveTask()">发布考核</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="scoreModal">
+        <div class="modal-container xlarge">
+            <div class="modal-header">
+                <h3 class="modal-title">导出成绩报告</h3>
+                <button class="modal-close" onclick="closeScoreModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="score-summary">
+                    <div class="score-item">
+                        <span class="score-label">平均成绩</span>
+                        <span class="score-value" id="avgScore">--</span>
+                    </div>
+                    <div class="score-item">
+                        <span class="score-label">最高分</span>
+                        <span class="score-value success" id="maxScore">--</span>
+                    </div>
+                    <div class="score-item">
+                        <span class="score-label">最低分</span>
+                        <span class="score-value danger" id="minScore">--</span>
+                    </div>
+                    <div class="score-item">
+                        <span class="score-label">通过率</span>
+                        <span class="score-value warning" id="passRate">--</span>
+                    </div>
+                </div>
+                
+                <div class="chart-container">
+                    <div class="chart-title">成绩分布统计</div>
+                    <div class="chart-bars" id="chartBars"></div>
+                </div>
+                
+                <div class="export-options">
+                    <label class="export-option">
+                        <input type="checkbox" id="exportAll" checked>
+                        <span class="export-option-label">导出全部记录</span>
+                    </label>
+                    <label class="export-option">
+                        <input type="checkbox" id="exportPass">
+                        <span class="export-option-label">仅导出通过人员</span>
+                    </label>
+                    <label class="export-option">
+                        <input type="checkbox" id="exportFail">
+                        <span class="export-option-label">仅导出未通过人员</span>
+                    </label>
+                    <label class="export-option">
+                        <input type="checkbox" id="exportPending">
+                        <span class="export-option-label">仅导出待考核人员</span>
+                    </label>
+                </div>
+                
+                <div>
+                    <div class="chart-title">成绩明细</div>
+                    <div class="score-table-container">
+                        <table class="score-table">
+                            <thead>
+                                <tr>
+                                    <th>排名</th>
+                                    <th>姓名</th>
+                                    <th>部门</th>
+                                    <th>培训课程</th>
+                                    <th>培训日期</th>
+                                    <th>成绩</th>
+                                    <th>结果</th>
+                                </tr>
+                            </thead>
+                            <tbody id="scoreTableBody">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn secondary" onclick="closeScoreModal()">关闭</button>
+                <button class="btn primary" onclick="doExport()">导出Excel</button>
+                <button class="btn primary" onclick="printScore()">打印报告</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast" style="display: none; position: fixed; top: 80px; right: 20px; padding: 12px 20px; background-color: var(--success-color); color: white; border-radius: 6px; box-shadow: var(--shadow-lg); z-index: 3000;">
+        <span id="toastMessage">操作成功</span>
+    </div>
+
+    <script src="../script.js"></script>
+    <script>
+        var allTrainingData = [];
+        var filteredData = [];
+        var currentPage = 1;
+        var pageSize = 10;
+        var currentEditId = null;
+        var currentViewId = null;
+        var allPersons = [];
+
+        document.addEventListener('DOMContentLoaded', function() {
+            generateTrainingData();
+            generatePersonList();
+            filteredData = allTrainingData.slice();
+            renderTable();
+            renderPagination();
+            document.getElementById('totalCount').textContent = filteredData.length;
+        });
+
+        function generateTrainingData() {
+            var names = ['张伟', '李娜', '王强', '刘洋', '陈静', '杨帆', '赵敏', '周杰', '吴芳', '郑勇', '孙丽', '钱进', '冯霞', '蒋涛', '韩冰', '曹明', '许婷', '邓超', '彭飞', '卢静', '范伟', '朱琳', '胡磊', '高洁', '林峰', '何平', '罗琳', '梁涛', '谢娟', '唐明', '韩雪', '冯刚', '于洋', '董丽', '袁华', '邓强', '傅明', '沈静', '姜涛', '谭明', '邹丽', '彭刚', '潘洁', '蔡勇', '贾峰', '夏丽', '汪涛', '石静', '廖强', '姚丽', '卢刚', '毛洁', '邱勇', '秦丽', '江涛', '史强', '顾丽', '侯勇', '龚涛', '程静', '丁强', '魏丽', '任涛', '沈强', '卢丽', '焦勇', '吕静', '苏涛', '卢强', '蒋丽', '蔡涛', '贾静', '丁丽', '魏涛', '任强', '沈丽', '顾涛', '侯丽', '龚强', '程涛', '丁静', '魏强', '于丽', '袁涛', '邓丽', '傅涛', '沈强', '姜丽', '谭涛', '邹强', '彭丽', '潘涛', '蔡丽', '贾强', '夏涛', '石丽', '廖涛', '姚强', '卢丽', '毛涛', '邱丽', '秦涛', '江丽', '史涛', '顾强', '侯涛', '龚丽', '程强', '丁涛', '魏丽', '任强', '沈涛', '卢丽', '焦涛', '吕强', '苏丽', '卢涛', '蒋强', '蔡丽', '贾涛', '丁强', '魏涛', '任丽', '沈强', '顾丽', '侯涛', '龚强', '程涛', '丁丽', '魏强', '于涛', '袁丽', '邓涛', '傅强', '沈丽', '姜涛', '谭强', '邹丽', '彭涛', '潘丽', '蔡强', '贾涛', '夏丽', '石涛', '廖丽', '姚涛', '卢强', '毛丽', '邱涛', '秦强', '江丽', '史强', '顾涛', '侯丽', '龚强', '程涛', '丁强', '魏丽', '任涛', '沈强', '卢丽', '焦涛', '吕强', '苏丽', '卢涛', '蒋强', '蔡丽', '贾涛', '丁强', '魏涛', '任丽', '沈强', '顾丽', '侯涛', '龚强', '程涛', '丁丽', '魏强', '于涛', '袁丽', '邓涛', '傅强', '沈丽', '姜涛', '谭强', '邹丽', '彭涛', '潘丽', '蔡强', '贾涛', '夏丽', '石涛', '廖丽', '姚涛', '卢强', '毛丽', '邱涛', '秦强', '江丽', '史强', '顾涛', '侯丽', '龚强', '程涛', '丁强', '魏丽', '任涛', '沈强', '卢丽', '焦涛', '吕强', '苏丽', '卢涛', '蒋强', '蔡丽', '贾涛', '丁强', '魏涛', '任丽', '沈强', '顾丽', '侯涛', '龚强', '程涛', '丁丽', '魏强'];
+            var depts = ['生产部', '安全部', '设备部', '质检部', '仓储部', '行政部'];
+            var positions = ['作业人员', '安全员', '设备维护', '质检员', '仓库管理员', '行政人员', '班组长', '技术员', '检验员', '操作工'];
+            var courses = ['有限空间作业安全培训', '应急救援培训', '消防安全培训', '职业健康培训', '特种作业培训'];
+            var courseTypes = ['岗前培训', '在岗培训', '转岗培训', '复训'];
+            var institutions = ['安全培训中心', '职业技能培训学校', '企业内部培训', '第三方培训机构', '行业协会'];
+            var instructors = ['王教授', '李工程师', '张安全师', '刘讲师', '陈专家'];
+            var locations = ['公司培训室', '安全教育基地', '在线培训平台', '实训中心', '会议室A'];
+            var methods = ['线上培训', '线下培训', '混合培训'];
+            var examMethods = ['在线考试', '笔试', '实操考核', '综合考核'];
+            
+            for (var i = 0; i < 156; i++) {
+                var name = names[Math.floor(Math.random() * names.length)];
+                var dept = depts[Math.floor(Math.random() * depts.length)];
+                var position = positions[Math.floor(Math.random() * positions.length)];
+                var course = courses[Math.floor(Math.random() * courses.length)];
+                var year = 2023 + Math.floor(Math.random() * 2) + 1;
+                var month = Math.floor(Math.random() * 12) + 1;
+                var day = Math.floor(Math.random() * 28) + 1;
+                var trainDate = year + '-' + String(month).padStart(2, '0') + '-' + String(day).padStart(2, '0');
+                var score = Math.floor(Math.random() * 41) + 60;
+                var result = score >= 60 ? '通过' : (score >= 40 ? '未通过' : '待考核');
+                if (Math.random() < 0.1) {
+                    score = 0;
+                    result = '待考核';
+                }
+                var expiryYear = year + (Math.random() > 0.5 ? 1 : 2);
+                var expiryMonth = Math.floor(Math.random() * 12) + 1;
+                var expiryDay = Math.floor(Math.random() * 28) + 1;
+                var expiry = expiryYear + '-' + String(expiryMonth).padStart(2, '0') + '-' + String(expiryDay).padStart(2, '0');
+                
+                var progress = result === '待考核' ? Math.floor(Math.random() * 60) + 20 : 100;
+                
+                allTrainingData.push({
+                    id: i + 1,
+                    name: name,
+                    dept: dept,
+                    position: position,
+                    employeeId: 'EMP' + String(1000 + i).padStart(4, '0'),
+                    phone: '138' + String(Math.floor(Math.random() * 100000000)).padStart(8, '0'),
+                    joinDate: (2020 + Math.floor(Math.random() * 4)) + '-' + String(Math.floor(Math.random() * 12) + 1).padStart(2, '0') + '-01',
+                    course: course,
+                    courseType: courseTypes[Math.floor(Math.random() * courseTypes.length)],
+                    trainDate: trainDate,
+                    duration: Math.floor(Math.random() * 8) + 4,
+                    institution: institutions[Math.floor(Math.random() * institutions.length)],
+                    instructor: instructors[Math.floor(Math.random() * instructors.length)],
+                    location: locations[Math.floor(Math.random() * locations.length)],
+                    method: methods[Math.floor(Math.random() * methods.length)],
+                    score: score,
+                    result: result,
+                    examDate: trainDate,
+                    examMethod: examMethods[Math.floor(Math.random() * examMethods.length)],
+                    certNo: result === '通过' ? 'CERT' + String(2024000 + i).padStart(7, '0') : '-',
+                    expiry: result === '通过' ? expiry : '-',
+                    progress: progress
+                });
+            }
+        }
+
+        function generatePersonList() {
+            var names = ['张伟', '李娜', '王强', '刘洋', '陈静', '杨帆', '赵敏', '周杰', '吴芳', '郑勇', '孙丽', '钱进', '冯霞', '蒋涛', '韩冰', '曹明', '许婷', '邓超', '彭飞', '卢静', '范伟', '朱琳', '胡磊', '高洁', '林峰', '何平', '罗琳', '梁涛', '谢娟', '唐明'];
+            var depts = ['生产部', '安全部', '设备部', '质检部', '仓储部', '行政部'];
+            var positions = ['作业人员', '安全员', '设备维护', '质检员', '仓库管理员', '行政人员'];
+            
+            allPersons = [];
+            for (var i = 0; i < names.length; i++) {
+                allPersons.push({
+                    id: i + 1,
+                    name: names[i],
+                    dept: depts[Math.floor(Math.random() * depts.length)],
+                    position: positions[Math.floor(Math.random() * positions.length)]
+                });
+            }
+        }
+
+        function renderTable() {
+            var tbody = document.getElementById('dataTableBody');
+            var start = (currentPage - 1) * pageSize;
+            var end = start + pageSize;
+            var pageData = filteredData.slice(start, end);
+            
+            if (pageData.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="10"><div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 2 2h12a2 2 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg><span>暂无数据</span></div></td></tr>';
+                return;
+            }
+            
+            var html = '';
+            for (var i = 0; i < pageData.length; i++) {
+                var item = pageData[i];
+                var resultClass = item.result === '通过' ? 'success' : (item.result === '未通过' ? 'danger' : 'warning');
+                var scoreDisplay = item.score > 0 ? item.score : '-';
+                var scoreClass = item.score >= 80 ? 'success' : (item.score >= 60 ? 'warning' : '');
+                
+                html += '<tr>' +
+                    '<td>' + ((currentPage - 1) * pageSize + i + 1) + '</td>' +
+                    '<td>' + item.name + '</td>' +
+                    '<td>' + item.dept + '</td>' +
+                    '<td>' + item.position + '</td>' +
+                    '<td>' + item.course + '</td>' +
+                    '<td>' + item.trainDate + '</td>' +
+                    '<td><span class="status-tag ' + scoreClass + '">' + scoreDisplay + '</span></td>' +
+                    '<td><span class="status-tag ' + resultClass + '">' + item.result + '</span></td>' +
+                    '<td>' + item.expiry + '</td>' +
+                    '<td>' +
+                    '<div class="action-btns">' +
+                    '<button class="action-btn view" onclick="showViewModal(' + item.id + ')">查询</button>' +
+                    '<button class="action-btn edit" onclick="showEditModal(' + item.id + ')">编辑</button>' +
+                    '</div>' +
+                    '</td>' +
+                    '</tr>';
+            }
+            tbody.innerHTML = html;
+        }
+
+        function renderPagination() {
+            var totalPages = Math.ceil(filteredData.length / pageSize);
+            var paginationPages = document.getElementById('paginationPages');
+            var html = '';
+            
+            var startPage = Math.max(1, currentPage - 2);
+            var endPage = Math.min(totalPages, startPage + 4);
+            if (endPage - startPage < 4) {
+                startPage = Math.max(1, endPage - 4);
+            }
+            
+            for (var i = startPage; i <= endPage; i++) {
+                html += '<button class="pagination-btn ' + (i === currentPage ? 'active' : '') + '" onclick="changePage(' + i + ')">' + i + '</button>';
+            }
+            paginationPages.innerHTML = html;
+            
+            document.getElementById('prevBtn').disabled = currentPage === 1;
+            document.getElementById('nextBtn').disabled = currentPage === totalPages || totalPages === 0;
+        }
+
+        function changePage(page) {
+            var totalPages = Math.ceil(filteredData.length / pageSize);
+            if (page === 'prev') {
+                if (currentPage > 1) currentPage--;
+            } else if (page === 'next') {
+                if (currentPage < totalPages) currentPage++;
+            } else {
+                currentPage = page;
+            }
+            renderTable();
+            renderPagination();
+        }
+
+        function doSearch() {
+            var name = document.getElementById('filterName').value.toLowerCase();
+            var dept = document.getElementById('filterDept').value;
+            var status = document.getElementById('filterStatus').value;
+            
+            filteredData = allTrainingData.filter(function(item) {
+                var nameMatch = !name || item.name.toLowerCase().indexOf(name) !== -1;
+                var deptMatch = !dept || item.dept === dept;
+                var statusMatch = !status || item.result === status;
+                return nameMatch && deptMatch && statusMatch;
+            });
+            
+            currentPage = 1;
+            renderTable();
+            renderPagination();
+            document.getElementById('totalCount').textContent = filteredData.length;
+            showToast('查询完成，共找到 ' + filteredData.length + ' 条记录');
+        }
+
+        function resetSearch() {
+            document.getElementById('filterName').value = '';
+            document.getElementById('filterDept').value = '';
+            document.getElementById('filterStatus').value = '';
+            filteredData = allTrainingData.slice();
+            currentPage = 1;
+            renderTable();
+            renderPagination();
+            document.getElementById('totalCount').textContent = filteredData.length;
+            showToast('已重置筛选条件');
+        }
+
+        function showViewModal(id) {
+            var item = null;
+            for (var i = 0; i < allTrainingData.length; i++) {
+                if (allTrainingData[i].id === id) {
+                    item = allTrainingData[i];
+                    break;
+                }
+            }
+            
+            if (!item) return;
+            
+            currentViewId = id;
+            
+            document.getElementById('viewName').textContent = item.name;
+            document.getElementById('viewDept').textContent = item.dept;
+            document.getElementById('viewPosition').textContent = item.position;
+            document.getElementById('viewEmployeeId').textContent = item.employeeId;
+            document.getElementById('viewPhone').textContent = item.phone;
+            document.getElementById('viewJoinDate').textContent = item.joinDate;
+            
+            document.getElementById('viewCourse').textContent = item.course;
+            document.getElementById('viewCourseType').textContent = item.courseType;
+            document.getElementById('viewDate').textContent = item.trainDate;
+            document.getElementById('viewDuration').textContent = item.duration + ' 学时';
+            document.getElementById('viewInstitution').textContent = item.institution;
+            document.getElementById('viewInstructor').textContent = item.instructor;
+            document.getElementById('viewLocation').textContent = item.location;
+            document.getElementById('viewMethod').textContent = item.method;
+            
+            var scoreDisplay = item.score > 0 ? item.score + ' 分' : '未考核';
+            document.getElementById('viewScore').textContent = scoreDisplay;
+            document.getElementById('viewResult').textContent = item.result;
+            document.getElementById('viewExamDate').textContent = item.examDate;
+            document.getElementById('viewExamMethod').textContent = item.examMethod;
+            document.getElementById('viewCertNo').textContent = item.certNo;
+            document.getElementById('viewExpiry').textContent = item.expiry;
+            
+            document.getElementById('viewProgress').textContent = item.progress + '%';
+            document.getElementById('viewProgressBar').style.width = item.progress + '%';
+            document.getElementById('viewProgressBar').style.backgroundColor = item.progress >= 100 ? 'var(--success-color)' : 'var(--warning-color)';
+            
+            var studyLog = '';
+            if (item.progress >= 100) {
+                studyLog = '✓ 已完成全部课程学习<br>✓ 已通过考核<br>✓ 证书已颁发';
+            } else if (item.progress > 0) {
+                studyLog = '✓ 已完成 ' + item.progress + '% 课程学习<br>○ 考核待进行<br>○ 证书待颁发';
+            } else {
+                studyLog = '○ 课程学习待开始<br>○ 考核待进行<br>○ 证书待颁发';
+            }
+            document.getElementById('viewStudyLog').innerHTML = studyLog;
+            
+            document.getElementById('viewModal').classList.add('show');
+        }
+
+        function closeViewModal() {
+            document.getElementById('viewModal').classList.remove('show');
+        }
+
+        function showEditModal(id) {
+            var item = null;
+            for (var i = 0; i < allTrainingData.length; i++) {
+                if (allTrainingData[i].id === id) {
+                    item = allTrainingData[i];
+                    break;
+                }
+            }
+            
+            if (!item) return;
+            
+            currentEditId = id;
+            document.getElementById('editName').value = item.name;
+            document.getElementById('editDept').value = item.dept;
+            document.getElementById('editPosition').value = item.position;
+            document.getElementById('editCourse').value = item.course;
+            document.getElementById('editDate').value = item.trainDate;
+            document.getElementById('editScore').value = item.score > 0 ? item.score : '';
+            document.getElementById('editResult').value = item.result;
+            document.getElementById('editExpiry').value = item.expiry === '-' ? '' : item.expiry;
+            document.getElementById('editModal').classList.add('show');
+        }
+
+        function closeEditModal() {
+            document.getElementById('editModal').classList.remove('show');
+        }
+
+        function saveEdit() {
+            var name = document.getElementById('editName').value;
+            var dept = document.getElementById('editDept').value;
+            var course = document.getElementById('editCourse').value;
+            var date = document.getElementById('editDate').value;
+            
+            if (!name || !dept || !course || !date) {
+                showToast('请填写必填项', 'error');
+                return;
+            }
+            
+            for (var i = 0; i < allTrainingData.length; i++) {
+                if (allTrainingData[i].id === currentEditId) {
+                    allTrainingData[i].name = name;
+                    allTrainingData[i].dept = dept;
+                    allTrainingData[i].position = document.getElementById('editPosition').value || '-';
+                    allTrainingData[i].course = course;
+                    allTrainingData[i].trainDate = date;
+                    allTrainingData[i].score = parseInt(document.getElementById('editScore').value) || 0;
+                    allTrainingData[i].result = document.getElementById('editResult').value;
+                    allTrainingData[i].expiry = document.getElementById('editExpiry').value || '-';
+                    break;
+                }
+            }
+            
+            filteredData = allTrainingData.slice();
+            renderTable();
+            renderPagination();
+            closeEditModal();
+            showToast('编辑成功');
+        }
+
+        function editFromView() {
+            if (currentViewId) {
+                closeViewModal();
+                showEditModal(currentViewId);
+            }
+        }
+
+        function showAddTaskModal() {
+            document.getElementById('addTaskForm').reset();
+            renderPersonList();
+            document.getElementById('addTaskModal').classList.add('show');
+        }
+
+        function closeAddTaskModal() {
+            document.getElementById('addTaskModal').classList.remove('show');
+        }
+
+        function renderPersonList() {
+            var container = document.getElementById('personList');
+            var html = '';
+            
+            for (var i = 0; i < allPersons.length; i++) {
+                var person = allPersons[i];
+                html += '<div class="person-item">' +
+                    '<input type="checkbox" class="person-checkbox" data-id="' + person.id + '" onchange="updateSelectedCount()">' +
+                    '<div class="person-info">' +
+                    '<span class="person-name">' + person.name + '</span>' +
+                    '<span class="person-dept">' + person.dept + ' - ' + person.position + '</span>' +
+                    '</div>' +
+                    '</div>';
+            }
+            container.innerHTML = html;
+            updateSelectedCount();
+        }
+
+        function toggleSelectAll() {
+            var selectAll = document.getElementById('selectAllPersons').checked;
+            var checkboxes = document.querySelectorAll('.person-checkbox');
+            for (var i = 0; i < checkboxes.length; i++) {
+                checkboxes[i].checked = selectAll;
+            }
+            updateSelectedCount();
+        }
+
+        function updateSelectedCount() {
+            var checkboxes = document.querySelectorAll('.person-checkbox:checked');
+            document.getElementById('selectedCount').textContent = checkboxes.length;
+        }
+
+        function saveTask() {
+            var taskName = document.getElementById('taskName').value;
+            var taskType = document.getElementById('taskType').value;
+            var startDate = document.getElementById('taskStartDate').value;
+            var endDate = document.getElementById('taskEndDate').value;
+            
+            if (!taskName || !taskType || !startDate || !endDate) {
+                showToast('请填写必填项', 'error');
+                return;
+            }
+            
+            var checkboxes = document.querySelectorAll('.person-checkbox:checked');
+            if (checkboxes.length === 0) {
+                showToast('请至少选择一名考核人员', 'error');
+                return;
+            }
+            
+            var selectedPersons = [];
+            for (var i = 0; i < checkboxes.length; i++) {
+                var id = parseInt(checkboxes[i].getAttribute('data-id'));
+                for (var j = 0; j < allPersons.length; j++) {
+                    if (allPersons[j].id === id) {
+                        selectedPersons.push(allPersons[j]);
+                        break;
+                    }
+                }
+            }
+            
+            for (var i = 0; i < selectedPersons.length; i++) {
+                var person = selectedPersons[i];
+                var newRecord = {
+                    id: allTrainingData.length + 1,
+                    name: person.name,
+                    dept: person.dept,
+                    position: person.position,
+                    employeeId: 'EMP' + String(1000 + allTrainingData.length).padStart(4, '0'),
+                    phone: '138' + String(Math.floor(Math.random() * 100000000)).padStart(8, '0'),
+                    joinDate: '2023-01-01',
+                    course: taskType,
+                    courseType: '在岗培训',
+                    trainDate: startDate,
+                    duration: parseInt(document.getElementById('taskDuration').value) || 60,
+                    institution: '企业内部培训',
+                    instructor: '系统分配',
+                    location: '在线培训平台',
+                    method: '线上培训',
+                    score: 0,
+                    result: '待考核',
+                    examDate: endDate,
+                    examMethod: '在线考试',
+                    certNo: '-',
+                    expiry: '-',
+                    progress: 0
+                };
+                allTrainingData.unshift(newRecord);
+            }
+            
+            filteredData = allTrainingData.slice();
+            currentPage = 1;
+            renderTable();
+            renderPagination();
+            document.getElementById('totalCount').textContent = filteredData.length;
+            closeAddTaskModal();
+            showToast('考核任务发布成功，已分配给 ' + selectedPersons.length + ' 人');
+        }
+
+        function exportScores() {
+            var scores = [];
+            for (var i = 0; i < filteredData.length; i++) {
+                if (filteredData[i].score > 0) {
+                    scores.push(filteredData[i].score);
+                }
+            }
+            
+            if (scores.length === 0) {
+                showToast('没有可导出的成绩数据', 'error');
+                return;
+            }
+            
+            var avg = Math.round(scores.reduce(function(a, b) { return a + b; }, 0) / scores.length);
+            var max = Math.max.apply(null, scores);
+            var min = Math.min.apply(null, scores);
+            var passCount = scores.filter(function(s) { return s >= 60; }).length;
+            var passRate = Math.round(passCount / scores.length * 100);
+            
+            document.getElementById('avgScore').textContent = avg;
+            document.getElementById('maxScore').textContent = max;
+            document.getElementById('minScore').textContent = min;
+            document.getElementById('passRate').textContent = passRate + '%';
+            
+            var chartBars = document.getElementById('chartBars');
+            var scoreRanges = [
+                { label: '0-59', count: 0, color: '#e53e3e' },
+                { label: '60-69', count: 0, color: '#ed8936' },
+                { label: '70-79', count: 0, color: '#f6ad55' },
+                { label: '80-89', count: 0, color: '#38a169' },
+                { label: '90-100', count: 0, color: '#3182ce' }
+            ];
+            
+            for (var i = 0; i < scores.length; i++) {
+                if (scores[i] < 60) scoreRanges[0].count++;
+                else if (scores[i] < 70) scoreRanges[1].count++;
+                else if (scores[i] < 80) scoreRanges[2].count++;
+                else if (scores[i] < 90) scoreRanges[3].count++;
+                else scoreRanges[4].count++;
+            }
+            
+            var maxCount = Math.max.apply(null, scoreRanges.map(function(r) { return r.count; }));
+            var html = '';
+            for (var i = 0; i < scoreRanges.length; i++) {
+                var height = maxCount > 0 ? Math.round((scoreRanges[i].count / maxCount) * 140) : 0;
+                html += '<div class="chart-bar" style="height: ' + Math.max(height, 20) + 'px; background-color: ' + scoreRanges[i].color + ';">' +
+                    '<span class="chart-bar-value">' + scoreRanges[i].count + '</span>' +
+                    '<span class="chart-bar-label">' + scoreRanges[i].label + '</span>' +
+                    '</div>';
+            }
+            chartBars.innerHTML = html;
+            
+            var tbody = document.getElementById('scoreTableBody');
+            var sortedData = filteredData.filter(function(item) { return item.score > 0; }).sort(function(a, b) { return b.score - a.score; });
+            
+            var tableHtml = '';
+            for (var i = 0; i < sortedData.length; i++) {
+                var item = sortedData[i];
+                var resultClass = item.result === '通过' ? 'success' : 'danger';
+                tableHtml += '<tr>' +
+                    '<td>' + (i + 1) + '</td>' +
+                    '<td>' + item.name + '</td>' +
+                    '<td>' + item.dept + '</td>' +
+                    '<td>' + item.course + '</td>' +
+                    '<td>' + item.trainDate + '</td>' +
+                    '<td>' + item.score + '</td>' +
+                    '<td><span class="status-tag ' + resultClass + '">' + item.result + '</span></td>' +
+                    '</tr>';
+            }
+            tbody.innerHTML = tableHtml;
+            
+            document.getElementById('scoreModal').classList.add('show');
+        }
+
+        function closeScoreModal() {
+            document.getElementById('scoreModal').classList.remove('show');
+        }
+
+        function doExport() {
+            showToast('正在导出Excel文件...');
+            setTimeout(function() {
+                showToast('导出成功！文件已保存');
+            }, 1000);
+        }
+
+        function printScore() {
+            showToast('正在准备打印...');
+            window.print();
+        }
+
+        function showToast(message, type) {
+            var toast = document.getElementById('toast');
+            document.getElementById('toastMessage').textContent = message;
+            
+            if (type === 'error') {
+                toast.style.backgroundColor = 'var(--danger-color)';
+            } else {
+                toast.style.backgroundColor = 'var(--success-color)';
+            }
+            
+            toast.style.display = 'block';
+            setTimeout(function() {
+                toast.style.display = 'none';
+            }, 2000);
+        }
+
+        document.querySelectorAll('.modal-overlay').forEach(function(modal) {
+            modal.addEventListener('click', function(e) {
+                if (e.target === this) {
+                    this.classList.remove('show');
+                }
+            });
+        });
+    </script>
+</body>
+</html>
