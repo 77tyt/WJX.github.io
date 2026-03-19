@@ -1,0 +1,2466 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>应急处置 - 有限空间作业安全风险动态管控平台</title>
+    <link rel="stylesheet" href="../style.css">
+    <style>
+        body {
+            background-color: #1a1a2e;
+        }
+        .emergency-page {
+            height: calc(100vh - 56px);
+            display: flex;
+            flex-direction: column;
+        }
+        .emergency-header {
+            background: linear-gradient(90deg, #c53030 0%, #e53e3e 100%);
+            padding: 16px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .emergency-title {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: white;
+        }
+        .emergency-title svg {
+            width: 28px;
+            height: 28px;
+            animation: alertBlink 0.5s ease infinite alternate;
+        }
+        @keyframes alertBlink {
+            0% { opacity: 1; }
+            100% { opacity: 0.5; }
+        }
+        .emergency-title h2 {
+            font-size: 20px;
+            font-weight: bold;
+        }
+        .emergency-status {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: white;
+        }
+        .status-item svg {
+            width: 18px;
+            height: 18px;
+        }
+        .status-item span {
+            font-size: 13px;
+        }
+        .emergency-content {
+            flex: 1;
+            display: flex;
+            gap: 16px;
+            padding: 16px;
+            overflow: hidden;
+        }
+        .resource-map {
+            width: 45%;
+            background-color: #16213e;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .map-header {
+            padding: 14px 16px;
+            background-color: rgba(0, 0, 0, 0.2);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .map-title {
+            font-size: 14px;
+            font-weight: bold;
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .map-title svg {
+            width: 18px;
+            height: 18px;
+            stroke: var(--warning-color);
+        }
+        .map-container {
+            flex: 1;
+            position: relative;
+            background-color: #0f0f23;
+        }
+        .map-grid {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: 
+                linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+            background-size: 40px 40px;
+        }
+        .map-building {
+            position: absolute;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 4px;
+            background-color: rgba(26, 54, 93, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 11px;
+        }
+        .resource-marker {
+            position: absolute;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+        .resource-marker:hover {
+            transform: scale(1.1);
+        }
+        .marker-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+        }
+        .marker-icon.person {
+            background-color: var(--success-color);
+        }
+        .marker-icon.equipment {
+            background-color: var(--info-color);
+        }
+        .marker-icon.danger {
+            background-color: var(--danger-color);
+            animation: markerPulse 1s infinite;
+        }
+        @keyframes markerPulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(229, 62, 62, 0.7); }
+            50% { box-shadow: 0 0 0 15px rgba(229, 62, 62, 0); }
+        }
+        .marker-icon svg {
+            width: 18px;
+            height: 18px;
+            stroke: white;
+        }
+        .marker-label {
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 2px 8px;
+            border-radius: 3px;
+            font-size: 10px;
+            white-space: nowrap;
+        }
+        .right-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        .plan-section {
+            height: 45%;
+            background-color: #16213e;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .plan-header {
+            padding: 14px 16px;
+            background-color: rgba(0, 0, 0, 0.2);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .plan-title {
+            font-size: 14px;
+            font-weight: bold;
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .plan-title svg {
+            width: 18px;
+            height: 18px;
+            stroke: var(--danger-color);
+        }
+        .plan-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+        }
+        .plan-step {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 12px;
+            padding: 12px;
+            background-color: rgba(0, 0, 0, 0.2);
+            border-radius: 6px;
+            border-left: 3px solid var(--danger-color);
+        }
+        .plan-step.completed {
+            border-left-color: var(--success-color);
+            opacity: 0.7;
+        }
+        .step-number {
+            width: 28px;
+            height: 28px;
+            background-color: var(--danger-color);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 12px;
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+        .plan-step.completed .step-number {
+            background-color: var(--success-color);
+        }
+        .step-content {
+            flex: 1;
+        }
+        .step-title {
+            font-size: 13px;
+            font-weight: 500;
+            color: white;
+            margin-bottom: 4px;
+        }
+        .step-desc {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.6);
+            margin-bottom: 8px;
+        }
+        .step-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .step-btn {
+            padding: 6px 12px;
+            font-size: 11px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: none;
+            background-color: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+        .step-btn:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+        .step-btn.primary {
+            background-color: var(--primary-color);
+        }
+        .step-btn.primary:hover {
+            background-color: var(--primary-dark);
+        }
+        .step-btn.success {
+            background-color: var(--success-color);
+        }
+        .step-btn.warning {
+            background-color: var(--warning-color);
+        }
+        .contact-section {
+            height: 30%;
+            background-color: #16213e;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .contact-header {
+            padding: 14px 16px;
+            background-color: rgba(0, 0, 0, 0.2);
+        }
+        .contact-title {
+            font-size: 14px;
+            font-weight: bold;
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .contact-title svg {
+            width: 18px;
+            height: 18px;
+            stroke: var(--warning-color);
+        }
+        .contact-content {
+            flex: 1;
+            padding: 16px;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+        }
+        .contact-btn {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 14px;
+            background-color: rgba(0, 0, 0, 0.2);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .contact-btn:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+            border-color: var(--primary-light);
+        }
+        .contact-btn-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .contact-btn-icon.call {
+            background-color: rgba(56, 161, 105, 0.2);
+        }
+        .contact-btn-icon.call svg { stroke: var(--success-color); }
+        .contact-btn-icon.message {
+            background-color: rgba(49, 130, 206, 0.2);
+        }
+        .contact-btn-icon.message svg { stroke: var(--info-color); }
+        .contact-btn-icon.alert {
+            background-color: rgba(229, 62, 62, 0.2);
+        }
+        .contact-btn-icon.alert svg { stroke: var(--danger-color); }
+        .contact-btn-icon svg {
+            width: 20px;
+            height: 20px;
+        }
+        .contact-btn-info {
+            flex: 1;
+        }
+        .contact-btn-name {
+            font-size: 13px;
+            font-weight: 500;
+            color: white;
+        }
+        .contact-btn-desc {
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.5);
+        }
+        .record-section {
+            height: 25%;
+            background-color: #16213e;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .record-header {
+            padding: 14px 16px;
+            background-color: rgba(0, 0, 0, 0.2);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .record-title {
+            font-size: 14px;
+            font-weight: bold;
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .record-title svg {
+            width: 18px;
+            height: 18px;
+            stroke: var(--info-color);
+        }
+        .auto-save {
+            font-size: 11px;
+            color: var(--success-color);
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .auto-save svg {
+            width: 12px;
+            height: 12px;
+        }
+        .record-content {
+            flex: 1;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+        }
+        .record-textarea {
+            flex: 1;
+            background-color: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
+            padding: 12px;
+            color: white;
+            font-size: 13px;
+            resize: none;
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+        }
+        .record-textarea::placeholder {
+            color: rgba(255, 255, 255, 0.3);
+        }
+        .record-textarea:focus {
+            outline: none;
+            border-color: var(--primary-light);
+        }
+        .record-timeline {
+            margin-top: 12px;
+            max-height: 80px;
+            overflow-y: auto;
+        }
+        .record-item {
+            display: flex;
+            gap: 10px;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        .record-item:last-child {
+            border-bottom: none;
+        }
+        .record-time {
+            font-size: 11px;
+            color: var(--info-color);
+            flex-shrink: 0;
+        }
+        .record-text {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.7);
+        }
+        .legend-bar {
+            position: absolute;
+            bottom: 16px;
+            left: 16px;
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 10px 16px;
+            border-radius: 6px;
+            display: flex;
+            gap: 20px;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .legend-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+        .legend-dot.danger { background-color: var(--danger-color); }
+        .legend-dot.person { background-color: var(--success-color); }
+        .legend-dot.equipment { background-color: var(--info-color); }
+        .legend-text {
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.7);
+        }
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.7);
+            z-index: 1500;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-overlay.show {
+            display: flex;
+        }
+        .modal-container {
+            background-color: #16213e;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 700px;
+            max-height: 85vh;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .modal-container.large {
+            max-width: 900px;
+        }
+        .modal-container.xlarge {
+            max-width: 1100px;
+        }
+        .modal-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
+        }
+        .modal-title {
+            font-size: 16px;
+            font-weight: bold;
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .modal-title svg {
+            width: 20px;
+            height: 20px;
+        }
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: rgba(255, 255, 255, 0.5);
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+        }
+        .modal-close:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+        .modal-body {
+            padding: 20px;
+            overflow-y: auto;
+            flex: 1;
+        }
+        .modal-footer {
+            padding: 16px 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            flex-shrink: 0;
+        }
+        .modal-btn {
+            padding: 10px 20px;
+            font-size: 13px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: none;
+        }
+        .modal-btn.secondary {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+        .modal-btn.secondary:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+        .modal-btn.primary {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        .modal-btn.primary:hover {
+            background-color: var(--primary-dark);
+        }
+        .modal-btn.danger {
+            background-color: var(--danger-color);
+            color: white;
+        }
+        .modal-btn.success {
+            background-color: var(--success-color);
+            color: white;
+        }
+        .sensor-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+        .sensor-card {
+            background-color: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            padding: 16px;
+            text-align: center;
+        }
+        .sensor-label {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.5);
+            margin-bottom: 8px;
+        }
+        .sensor-value {
+            font-size: 28px;
+            font-weight: bold;
+            margin-bottom: 4px;
+        }
+        .sensor-value.normal { color: var(--success-color); }
+        .sensor-value.warning { color: var(--warning-color); }
+        .sensor-value.danger { color: var(--danger-color); }
+        .sensor-unit {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.5);
+        }
+        .sensor-status {
+            font-size: 11px;
+            margin-top: 8px;
+            padding: 4px 8px;
+            border-radius: 4px;
+            display: inline-block;
+        }
+        .sensor-status.normal { background-color: rgba(56, 161, 105, 0.2); color: var(--success-color); }
+        .sensor-status.warning { background-color: rgba(237, 137, 54, 0.2); color: var(--warning-color); }
+        .sensor-status.danger { background-color: rgba(229, 62, 62, 0.2); color: var(--danger-color); }
+        .video-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+        }
+        .video-card {
+            background-color: rgba(0, 0, 0, 0.5);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .video-header {
+            padding: 10px 12px;
+            background-color: rgba(0, 0, 0, 0.3);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .video-name {
+            font-size: 12px;
+            color: white;
+            font-weight: 500;
+        }
+        .video-status {
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 3px;
+            background-color: var(--success-color);
+            color: white;
+        }
+        .video-content {
+            height: 150px;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: rgba(255, 255, 255, 0.3);
+            font-size: 12px;
+        }
+        .video-content svg {
+            width: 40px;
+            height: 40px;
+            margin-bottom: 8px;
+        }
+        .contact-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .contact-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px;
+            background-color: rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        .contact-avatar {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background-color: rgba(49, 130, 206, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .contact-avatar svg {
+            width: 22px;
+            height: 22px;
+            stroke: var(--info-color);
+        }
+        .contact-info {
+            flex: 1;
+        }
+        .contact-name {
+            font-size: 14px;
+            font-weight: 500;
+            color: white;
+        }
+        .contact-role {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.5);
+        }
+        .contact-phone {
+            font-size: 12px;
+            color: var(--info-color);
+        }
+        .contact-actions {
+            display: flex;
+            gap: 8px;
+        }
+        .contact-action-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: none;
+        }
+        .contact-action-btn.call {
+            background-color: rgba(56, 161, 105, 0.2);
+        }
+        .contact-action-btn.call:hover {
+            background-color: var(--success-color);
+        }
+        .contact-action-btn.call:hover svg { stroke: white; }
+        .contact-action-btn.message {
+            background-color: rgba(49, 130, 206, 0.2);
+        }
+        .contact-action-btn.message:hover {
+            background-color: var(--info-color);
+        }
+        .contact-action-btn.message:hover svg { stroke: white; }
+        .contact-action-btn svg {
+            width: 16px;
+            height: 16px;
+        }
+        .contact-action-btn.call svg { stroke: var(--success-color); }
+        .contact-action-btn.message svg { stroke: var(--info-color); }
+        .broadcast-content {
+            background-color: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+        .broadcast-text {
+            font-size: 14px;
+            color: white;
+            line-height: 1.6;
+            margin-bottom: 12px;
+        }
+        .broadcast-areas {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .broadcast-area {
+            padding: 6px 12px;
+            background-color: rgba(229, 62, 62, 0.2);
+            border-radius: 4px;
+            font-size: 12px;
+            color: var(--danger-color);
+        }
+        .personnel-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+        }
+        .personnel-card {
+            background-color: rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+            padding: 14px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .personnel-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: var(--success-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .personnel-avatar svg {
+            width: 20px;
+            height: 20px;
+            stroke: white;
+        }
+        .personnel-info {
+            flex: 1;
+        }
+        .personnel-name {
+            font-size: 13px;
+            font-weight: 500;
+            color: white;
+        }
+        .personnel-status {
+            font-size: 11px;
+            color: var(--success-color);
+        }
+        .personnel-status.warning {
+            color: var(--warning-color);
+        }
+        .ventilation-control {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+        .vent-card {
+            background-color: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            padding: 16px;
+            text-align: center;
+        }
+        .vent-name {
+            font-size: 13px;
+            color: white;
+            margin-bottom: 8px;
+        }
+        .vent-status {
+            font-size: 11px;
+            padding: 4px 12px;
+            border-radius: 4px;
+            display: inline-block;
+            margin-bottom: 12px;
+        }
+        .vent-status.on { background-color: rgba(56, 161, 105, 0.2); color: var(--success-color); }
+        .vent-status.off { background-color: rgba(255, 255, 255, 0.1); color: rgba(255, 255, 255, 0.5); }
+        .vent-toggle {
+            padding: 8px 20px;
+            border-radius: 4px;
+            border: none;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s ease;
+        }
+        .vent-toggle.on {
+            background-color: var(--success-color);
+            color: white;
+        }
+        .vent-toggle.off {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+        .first-aid-section {
+            margin-bottom: 20px;
+        }
+        .aid-step {
+            display: flex;
+            gap: 12px;
+            padding: 12px;
+            background-color: rgba(0, 0, 0, 0.2);
+            border-radius: 6px;
+            margin-bottom: 10px;
+        }
+        .aid-number {
+            width: 24px;
+            height: 24px;
+            background-color: var(--danger-color);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 12px;
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+        .aid-content {
+            flex: 1;
+        }
+        .aid-title {
+            font-size: 13px;
+            font-weight: 500;
+            color: white;
+            margin-bottom: 4px;
+        }
+        .aid-desc {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.5);
+        }
+        .detection-history {
+            background-color: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            padding: 16px;
+        }
+        .detection-title {
+            font-size: 13px;
+            font-weight: bold;
+            color: white;
+            margin-bottom: 12px;
+        }
+        .detection-chart {
+            display: flex;
+            align-items: flex-end;
+            gap: 8px;
+            height: 100px;
+        }
+        .detection-bar {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .detection-bar-fill {
+            width: 100%;
+            max-width: 30px;
+            border-radius: 4px 4px 0 0;
+            background-color: var(--success-color);
+        }
+        .detection-bar-fill.warning {
+            background-color: var(--warning-color);
+        }
+        .detection-bar-fill.danger {
+            background-color: var(--danger-color);
+        }
+        .detection-bar-label {
+            font-size: 10px;
+            color: rgba(255, 255, 255, 0.5);
+            margin-top: 4px;
+        }
+        .record-quick-actions {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+        }
+        .quick-action-btn {
+            padding: 6px 12px;
+            font-size: 11px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            background-color: transparent;
+            color: rgba(255, 255, 255, 0.7);
+        }
+        .quick-action-btn:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <header class="top-bar" style="background: linear-gradient(135deg, #c53030 0%, #9b2c2c 100%);">
+        <div class="top-bar-left">
+            <svg class="logo-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            </svg>
+            <h1 class="platform-title">有限空间作业安全风险动态管控平台 - 应急处置模式</h1>
+        </div>
+        <div class="top-bar-center">
+            <div class="realtime-alert" style="background-color: rgba(0, 0, 0, 0.2);">
+                <span class="alert-pulse"></span>
+                <span class="alert-text">应急响应中</span>
+            </div>
+            <div class="current-time" id="currentTime"></div>
+        </div>
+        <div class="user-section">
+            <div class="user-avatar">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                    <circle cx="12" cy="7" r="4"/>
+                </svg>
+            </div>
+            <span class="user-name">应急指挥</span>
+        </div>
+    </header>
+
+    <div class="emergency-page">
+        <div class="emergency-header">
+            <div class="emergency-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2"/>
+                    <line x1="12" y1="8" x2="12" y2="12"/>
+                    <line x1="12" y1="16" x2="12.01" y2="16"/>
+                </svg>
+                <h2>3号储罐氧浓度异常 - 应急处置</h2>
+            </div>
+            <div class="emergency-status">
+                <div class="status-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"/>
+                        <polyline points="12 6 12 12 16 14"/>
+                    </svg>
+                    <span>响应时间: <span id="responseTime">10:30:15</span></span>
+                </div>
+                <div class="status-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                    </svg>
+                    <span>当前状态: <span id="currentStatus">处置中</span></span>
+                </div>
+                <button class="btn" onclick="showEndEmergencyModal()" style="background-color: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.3);">结束应急</button>
+            </div>
+        </div>
+
+        <div class="emergency-content">
+            <div class="resource-map">
+                <div class="map-header">
+                    <div class="map-title">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+                            <circle cx="12" cy="10" r="3"/>
+                        </svg>
+                        应急资源地图
+                    </div>
+                    <span style="color: rgba(255,255,255,0.5); font-size: 12px;">实时更新</span>
+                </div>
+                <div class="map-container">
+                    <div class="map-grid"></div>
+                    <div class="map-building" style="top: 20%; left: 10%; width: 25%; height: 30%;">储罐区A</div>
+                    <div class="map-building" style="top: 20%; left: 40%; width: 25%; height: 30%;">储罐区B</div>
+                    <div class="map-building" style="top: 55%; left: 10%; width: 55%; height: 25%;">生产车间</div>
+                    <div class="map-building" style="top: 20%; left: 70%; width: 20%; height: 60%;">办公区</div>
+                    
+                    <div class="resource-marker" style="top: 32%; left: 22%;" onclick="showAccidentModal()">
+                        <div class="marker-icon danger">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2"/>
+                                <line x1="12" y1="8" x2="12" y2="12"/>
+                                <line x1="12" y1="16" x2="12.01" y2="16"/>
+                            </svg>
+                        </div>
+                        <span class="marker-label" style="background-color: var(--danger-color);">事故点: 3号储罐</span>
+                    </div>
+                    
+                    <div class="resource-marker" style="top: 38%; left: 18%;" onclick="showPersonnelModal('张三')">
+                        <div class="marker-icon person">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                                <circle cx="12" cy="7" r="4"/>
+                            </svg>
+                        </div>
+                        <span class="marker-label">救援组 张三</span>
+                    </div>
+                    <div class="resource-marker" style="top: 42%; left: 28%;" onclick="showPersonnelModal('李四')">
+                        <div class="marker-icon person">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                                <circle cx="12" cy="7" r="4"/>
+                            </svg>
+                        </div>
+                        <span class="marker-label">医疗组 李四</span>
+                    </div>
+                    <div class="resource-marker" style="top: 50%; left: 20%;" onclick="showPersonnelModal('王五')">
+                        <div class="marker-icon person">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                                <circle cx="12" cy="7" r="4"/>
+                            </svg>
+                        </div>
+                        <span class="marker-label">安全组 王五</span>
+                    </div>
+                    
+                    <div class="resource-marker" style="top: 60%; left: 15%;" onclick="showEquipmentModal('通风设备')">
+                        <div class="marker-icon equipment">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+                            </svg>
+                        </div>
+                        <span class="marker-label">通风设备</span>
+                    </div>
+                    <div class="resource-marker" style="top: 65%; left: 35%;" onclick="showEquipmentModal('急救设备')">
+                        <div class="marker-icon equipment">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                            </svg>
+                        </div>
+                        <span class="marker-label">急救设备</span>
+                    </div>
+                    
+                    <div class="legend-bar">
+                        <div class="legend-item">
+                            <div class="legend-dot danger"></div>
+                            <span class="legend-text">事故点</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-dot person"></div>
+                            <span class="legend-text">救援人员</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-dot equipment"></div>
+                            <span class="legend-text">救援设备</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="right-panel">
+                <div class="plan-section">
+                    <div class="plan-header">
+                        <div class="plan-title">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                                <polyline points="14 2 14 8 20 8"/>
+                            </svg>
+                            应急预案推送
+                        </div>
+                        <span style="color: rgba(255,255,255,0.5); font-size: 12px;">有限空间缺氧应急预案</span>
+                    </div>
+                    <div class="plan-content">
+                        <div class="plan-step" id="step1">
+                            <div class="step-number">1</div>
+                            <div class="step-content">
+                                <div class="step-title">立即撤离</div>
+                                <div class="step-desc">通知所有作业人员立即停止作业，撤离有限空间</div>
+                                <div class="step-actions">
+                                    <button class="step-btn primary" onclick="showEvacuateModal()">撤离通知</button>
+                                    <button class="step-btn" onclick="showPersonnelStatusModal()">人员确认</button>
+                                    <button class="step-btn success" onclick="completeStep(1)">完成</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="plan-step" id="step2">
+                            <div class="step-number">2</div>
+                            <div class="step-content">
+                                <div class="step-title">启动通风</div>
+                                <div class="step-desc">开启通风设备，增加有限空间内氧气含量</div>
+                                <div class="step-actions">
+                                    <button class="step-btn primary" onclick="showVentilationModal()">通风控制</button>
+                                    <button class="step-btn" onclick="showAirQualityModal()">空气质量</button>
+                                    <button class="step-btn success" onclick="completeStep(2)">完成</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="plan-step" id="step3">
+                            <div class="step-number">3</div>
+                            <div class="step-content">
+                                <div class="step-title">人员救治</div>
+                                <div class="step-desc">对受影响人员进行现场急救，必要时送医</div>
+                                <div class="step-actions">
+                                    <button class="step-btn primary" onclick="showFirstAidModal()">急救指南</button>
+                                    <button class="step-btn" onclick="showAmbulanceModal()">呼叫救护车</button>
+                                    <button class="step-btn success" onclick="completeStep(3)">完成</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="plan-step" id="step4">
+                            <div class="step-number">4</div>
+                            <div class="step-content">
+                                <div class="step-title">环境检测</div>
+                                <div class="step-desc">持续监测气体浓度，确认安全后方可恢复作业</div>
+                                <div class="step-actions">
+                                    <button class="step-btn primary" onclick="showDetectionModal()">实时监测</button>
+                                    <button class="step-btn" onclick="showHistoryModal()">历史数据</button>
+                                    <button class="step-btn success" onclick="completeStep(4)">完成</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="contact-section">
+                    <div class="contact-header">
+                        <div class="contact-title">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+                            </svg>
+                            联动联络
+                        </div>
+                    </div>
+                    <div class="contact-content">
+                        <div class="contact-btn" onclick="showEmergencyCallModal()">
+                            <div class="contact-btn-icon call">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+                                </svg>
+                            </div>
+                            <div class="contact-btn-info">
+                                <div class="contact-btn-name">一键拨打救援电话</div>
+                                <div class="contact-btn-desc">119 / 120 / 安全主管</div>
+                            </div>
+                        </div>
+                        <div class="contact-btn" onclick="showSendMessageModal()">
+                            <div class="contact-btn-icon message">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                                </svg>
+                            </div>
+                            <div class="contact-btn-info">
+                                <div class="contact-btn-name">发送协同信息</div>
+                                <div class="contact-btn-desc">通知相关部门和人员</div>
+                            </div>
+                        </div>
+                        <div class="contact-btn" onclick="showBroadcastModal()">
+                            <div class="contact-btn-icon alert">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2"/>
+                                    <line x1="12" y1="8" x2="12" y2="12"/>
+                                    <line x1="12" y1="16" x2="12.01" y2="16"/>
+                                </svg>
+                            </div>
+                            <div class="contact-btn-info">
+                                <div class="contact-btn-name">厂区广播</div>
+                                <div class="contact-btn-desc">启动应急广播系统</div>
+                            </div>
+                        </div>
+                        <div class="contact-btn" onclick="showContactWorkersModal()">
+                            <div class="contact-btn-icon call">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                                    <circle cx="9" cy="7" r="4"/>
+                                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                                    <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                                </svg>
+                            </div>
+                            <div class="contact-btn-info">
+                                <div class="contact-btn-name">联系作业人员</div>
+                                <div class="contact-btn-desc">张三 / 李四 / 王五</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="record-section">
+                    <div class="record-header">
+                        <div class="record-title">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                                <polyline points="14 2 14 8 20 8"/>
+                                <line x1="16" y1="13" x2="8" y2="13"/>
+                                <line x1="16" y1="17" x2="8" y2="17"/>
+                            </svg>
+                            应急处置记录
+                        </div>
+                        <div class="auto-save">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                                <polyline points="22 4 12 14.01 9 11.01"/>
+                            </svg>
+                            自动保存
+                        </div>
+                    </div>
+                    <div class="record-content">
+                        <div class="record-quick-actions">
+                            <button class="quick-action-btn" onclick="addRecord('发现异常')">发现异常</button>
+                            <button class="quick-action-btn" onclick="addRecord('启动通风')">启动通风</button>
+                            <button class="quick-action-btn" onclick="addRecord('人员撤离')">人员撤离</button>
+                            <button class="quick-action-btn" onclick="addRecord('救援到达')">救援到达</button>
+                            <button class="quick-action-btn" onclick="addRecord('现场急救')">现场急救</button>
+                            <button class="quick-action-btn" onclick="addRecord('环境检测')">环境检测</button>
+                        </div>
+                        <textarea class="record-textarea" id="recordText" placeholder="请输入处置过程记录..."></textarea>
+                        <div class="record-timeline" id="recordTimeline">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="accidentModal">
+        <div class="modal-container xlarge">
+            <div class="modal-header">
+                <h3 class="modal-title">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="var(--danger-color)" stroke-width="2">
+                        <polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2"/>
+                        <line x1="12" y1="8" x2="12" y2="12"/>
+                        <line x1="12" y1="16" x2="12.01" y2="16"/>
+                    </svg>
+                    事故点详情 - 3号储罐
+                </h3>
+                <button class="modal-close" onclick="closeModal('accidentModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="sensor-grid">
+                    <div class="sensor-card">
+                        <div class="sensor-label">氧气浓度</div>
+                        <div class="sensor-value danger" id="o2Value">18.5</div>
+                        <div class="sensor-unit">% (正常: 19.5-23.5%)</div>
+                        <span class="sensor-status danger">偏低</span>
+                    </div>
+                    <div class="sensor-card">
+                        <div class="sensor-label">一氧化碳</div>
+                        <div class="sensor-value normal" id="coValue">12</div>
+                        <div class="sensor-unit">ppm (安全: &lt;30ppm)</div>
+                        <span class="sensor-status normal">正常</span>
+                    </div>
+                    <div class="sensor-card">
+                        <div class="sensor-label">硫化氢</div>
+                        <div class="sensor-value normal" id="h2sValue">3</div>
+                        <div class="sensor-unit">ppm (安全: &lt;10ppm)</div>
+                        <span class="sensor-status normal">正常</span>
+                    </div>
+                    <div class="sensor-card">
+                        <div class="sensor-label">可燃气体</div>
+                        <div class="sensor-value normal" id="gasValue">0.5</div>
+                        <div class="sensor-unit">%LEL (安全: &lt;25%)</div>
+                        <span class="sensor-status normal">正常</span>
+                    </div>
+                    <div class="sensor-card">
+                        <div class="sensor-label">温度</div>
+                        <div class="sensor-value normal" id="tempValue">26</div>
+                        <div class="sensor-unit">°C</div>
+                        <span class="sensor-status normal">正常</span>
+                    </div>
+                    <div class="sensor-card">
+                        <div class="sensor-label">湿度</div>
+                        <div class="sensor-value normal" id="humidValue">65</div>
+                        <div class="sensor-unit">%RH</div>
+                        <span class="sensor-status normal">正常</span>
+                    </div>
+                </div>
+                <div style="margin-bottom: 16px;">
+                    <div style="font-size: 14px; font-weight: bold; color: white; margin-bottom: 12px;">监控视频</div>
+                    <div class="video-grid">
+                        <div class="video-card">
+                            <div class="video-header">
+                                <span class="video-name">CAM-001 储罐入口</span>
+                                <span class="video-status">在线</span>
+                            </div>
+                            <div class="video-content">
+                                <div style="text-align: center;">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <polygon points="23 7 16 12 23 17 23 7"/>
+                                        <rect x="1" y="5" width="15" height="14" rx="2" ry="2"/>
+                                    </svg>
+                                    <div>实时画面</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="video-card">
+                            <div class="video-header">
+                                <span class="video-name">CAM-002 储罐内部</span>
+                                <span class="video-status">在线</span>
+                            </div>
+                            <div class="video-content">
+                                <div style="text-align: center;">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <polygon points="23 7 16 12 23 17 23 7"/>
+                                        <rect x="1" y="5" width="15" height="14" rx="2" ry="2"/>
+                                    </svg>
+                                    <div>实时画面</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="video-card">
+                            <div class="video-header">
+                                <span class="video-name">CAM-003 周边区域</span>
+                                <span class="video-status">在线</span>
+                            </div>
+                            <div class="video-content">
+                                <div style="text-align: center;">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <polygon points="23 7 16 12 23 17 23 7"/>
+                                        <rect x="1" y="5" width="15" height="14" rx="2" ry="2"/>
+                                    </svg>
+                                    <div>实时画面</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="video-card">
+                            <div class="video-header">
+                                <span class="video-name">CAM-004 安全通道</span>
+                                <span class="video-status">在线</span>
+                            </div>
+                            <div class="video-content">
+                                <div style="text-align: center;">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <polygon points="23 7 16 12 23 17 23 7"/>
+                                        <rect x="1" y="5" width="15" height="14" rx="2" ry="2"/>
+                                    </svg>
+                                    <div>实时画面</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="modal-btn secondary" onclick="closeModal('accidentModal')">关闭</button>
+                <button class="modal-btn danger" onclick="refreshSensors()">刷新数据</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="evacuateModal">
+        <div class="modal-container">
+            <div class="modal-header">
+                <h3 class="modal-title">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="var(--warning-color)" stroke-width="2">
+                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                        <circle cx="9" cy="7" r="4"/>
+                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                        <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                    </svg>
+                    撤离通知
+                </h3>
+                <button class="modal-close" onclick="closeModal('evacuateModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div style="background-color: rgba(229, 62, 62, 0.2); border-radius: 8px; padding: 16px; margin-bottom: 16px;">
+                    <div style="font-size: 14px; font-weight: bold; color: var(--danger-color); margin-bottom: 8px;">紧急撤离通知</div>
+                    <div style="font-size: 13px; color: rgba(255, 255, 255, 0.8); line-height: 1.6;">
+                        3号储罐区域检测到氧气浓度异常，请所有作业人员立即停止作业，按照安全路线撤离至安全区域。
+                    </div>
+                </div>
+                <div style="margin-bottom: 16px;">
+                    <div style="font-size: 13px; font-weight: bold; color: white; margin-bottom: 12px;">撤离路线</div>
+                    <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                        <span style="padding: 8px 16px; background-color: rgba(255, 255, 255, 0.1); border-radius: 4px; font-size: 12px; color: white;">储罐区A → 安全通道 → 集合点</span>
+                    </div>
+                </div>
+                <div style="margin-bottom: 16px;">
+                    <div style="font-size: 13px; font-weight: bold; color: white; margin-bottom: 12px;">通知方式</div>
+                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                            <input type="checkbox" checked> 厂区广播
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                            <input type="checkbox" checked> 短信通知
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                            <input type="checkbox" checked> APP推送
+                        </label>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="modal-btn secondary" onclick="closeModal('evacuateModal')">取消</button>
+                <button class="modal-btn danger" onclick="sendEvacuateNotice()">发送撤离通知</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="personnelStatusModal">
+        <div class="modal-container">
+            <div class="modal-header">
+                <h3 class="modal-title">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="var(--success-color)" stroke-width="2">
+                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                        <circle cx="9" cy="7" r="4"/>
+                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                        <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                    </svg>
+                    人员状态确认
+                </h3>
+                <button class="modal-close" onclick="closeModal('personnelStatusModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="personnel-grid">
+                    <div class="personnel-card">
+                        <div class="personnel-avatar">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                                <circle cx="12" cy="7" r="4"/>
+                            </svg>
+                        </div>
+                        <div class="personnel-info">
+                            <div class="personnel-name">张三</div>
+                            <div class="personnel-status">已撤离至安全区域</div>
+                        </div>
+                    </div>
+                    <div class="personnel-card">
+                        <div class="personnel-avatar">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                                <circle cx="12" cy="7" r="4"/>
+                            </svg>
+                        </div>
+                        <div class="personnel-info">
+                            <div class="personnel-name">李四</div>
+                            <div class="personnel-status">已撤离至安全区域</div>
+                        </div>
+                    </div>
+                    <div class="personnel-card">
+                        <div class="personnel-avatar">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                                <circle cx="12" cy="7" r="4"/>
+                            </svg>
+                        </div>
+                        <div class="personnel-info">
+                            <div class="personnel-name">王五</div>
+                            <div class="personnel-status warning">撤离中...</div>
+                        </div>
+                    </div>
+                    <div class="personnel-card">
+                        <div class="personnel-avatar">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                                <circle cx="12" cy="7" r="4"/>
+                            </svg>
+                        </div>
+                        <div class="personnel-info">
+                            <div class="personnel-name">赵六</div>
+                            <div class="personnel-status">已撤离至安全区域</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="modal-btn secondary" onclick="closeModal('personnelStatusModal')">关闭</button>
+                <button class="modal-btn primary" onclick="confirmAllPersonnel()">全员确认</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="ventilationModal">
+        <div class="modal-container">
+            <div class="modal-header">
+                <h3 class="modal-title">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="var(--info-color)" stroke-width="2">
+                        <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+                    </svg>
+                    通风设备控制
+                </h3>
+                <button class="modal-close" onclick="closeModal('ventilationModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="ventilation-control">
+                    <div class="vent-card">
+                        <div class="vent-name">主通风机</div>
+                        <div class="vent-status on">运行中</div>
+                        <button class="vent-toggle on" onclick="toggleVent(this, '主通风机')">关闭</button>
+                    </div>
+                    <div class="vent-card">
+                        <div class="vent-name">备用通风机</div>
+                        <div class="vent-status off">已停止</div>
+                        <button class="vent-toggle off" onclick="toggleVent(this, '备用通风机')">启动</button>
+                    </div>
+                    <div class="vent-card">
+                        <div class="vent-name">排风系统</div>
+                        <div class="vent-status on">运行中</div>
+                        <button class="vent-toggle on" onclick="toggleVent(this, '排风系统')">关闭</button>
+                    </div>
+                    <div class="vent-card">
+                        <div class="vent-name">新风系统</div>
+                        <div class="vent-status on">运行中</div>
+                        <button class="vent-toggle on" onclick="toggleVent(this, '新风系统')">关闭</button>
+                    </div>
+                </div>
+                <div style="background-color: rgba(0, 0, 0, 0.3); border-radius: 8px; padding: 16px;">
+                    <div style="font-size: 13px; font-weight: bold; color: white; margin-bottom: 12px;">通风效果</div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                        <span style="font-size: 12px; color: rgba(255, 255, 255, 0.5);">氧气浓度回升</span>
+                        <span style="font-size: 12px; color: var(--success-color);">18.5% → 19.2%</span>
+                    </div>
+                    <div style="height: 8px; background-color: rgba(255, 255, 255, 0.1); border-radius: 4px; overflow: hidden;">
+                        <div style="width: 65%; height: 100%; background-color: var(--success-color); border-radius: 4px;"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="modal-btn secondary" onclick="closeModal('ventilationModal')">关闭</button>
+                <button class="modal-btn primary" onclick="startAllVent()">全部启动</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="airQualityModal">
+        <div class="modal-container">
+            <div class="modal-header">
+                <h3 class="modal-title">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="var(--success-color)" stroke-width="2">
+                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                        <polyline points="22 4 12 14.01 9 11.01"/>
+                    </svg>
+                    空气质量监测
+                </h3>
+                <button class="modal-close" onclick="closeModal('airQualityModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="sensor-grid">
+                    <div class="sensor-card">
+                        <div class="sensor-label">氧气浓度</div>
+                        <div class="sensor-value warning">19.2</div>
+                        <div class="sensor-unit">%</div>
+                        <span class="sensor-status warning">回升中</span>
+                    </div>
+                    <div class="sensor-card">
+                        <div class="sensor-label">一氧化碳</div>
+                        <div class="sensor-value normal">10</div>
+                        <div class="sensor-unit">ppm</div>
+                        <span class="sensor-status normal">正常</span>
+                    </div>
+                    <div class="sensor-card">
+                        <div class="sensor-label">硫化氢</div>
+                        <div class="sensor-value normal">2</div>
+                        <div class="sensor-unit">ppm</div>
+                        <span class="sensor-status normal">正常</span>
+                    </div>
+                </div>
+                <div class="detection-history">
+                    <div class="detection-title">氧气浓度趋势（最近10分钟）</div>
+                    <div class="detection-chart" id="airQualityChart"></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="modal-btn secondary" onclick="closeModal('airQualityModal')">关闭</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="firstAidModal">
+        <div class="modal-container">
+            <div class="modal-header">
+                <h3 class="modal-title">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="var(--danger-color)" stroke-width="2">
+                        <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+                    </svg>
+                    缺氧急救指南
+                </h3>
+                <button class="modal-close" onclick="closeModal('firstAidModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="first-aid-section">
+                    <div class="aid-step">
+                        <div class="aid-number">1</div>
+                        <div class="aid-content">
+                            <div class="aid-title">迅速脱离缺氧环境</div>
+                            <div class="aid-desc">将患者迅速转移到空气新鲜、通风良好的地方</div>
+                        </div>
+                    </div>
+                    <div class="aid-step">
+                        <div class="aid-number">2</div>
+                        <div class="aid-content">
+                            <div class="aid-title">保持呼吸道通畅</div>
+                            <div class="aid-desc">解开衣领、腰带，清除口鼻分泌物，保持呼吸道通畅</div>
+                        </div>
+                    </div>
+                    <div class="aid-step">
+                        <div class="aid-number">3</div>
+                        <div class="aid-content">
+                            <div class="aid-title">立即吸氧</div>
+                            <div class="aid-desc">如有条件，立即给予氧气吸入，流量4-6升/分钟</div>
+                        </div>
+                    </div>
+                    <div class="aid-step">
+                        <div class="aid-number">4</div>
+                        <div class="aid-content">
+                            <div class="aid-title">观察生命体征</div>
+                            <div class="aid-desc">密切观察呼吸、脉搏、血压、神志变化</div>
+                        </div>
+                    </div>
+                    <div class="aid-step">
+                        <div class="aid-number">5</div>
+                        <div class="aid-content">
+                            <div class="aid-title">必要时心肺复苏</div>
+                            <div class="aid-desc">如呼吸心跳停止，立即进行心肺复苏</div>
+                        </div>
+                    </div>
+                    <div class="aid-step">
+                        <div class="aid-number">6</div>
+                        <div class="aid-content">
+                            <div class="aid-title">及时送医</div>
+                            <div class="aid-desc">症状严重者应立即拨打120送医院治疗</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="modal-btn secondary" onclick="closeModal('firstAidModal')">关闭</button>
+                <button class="modal-btn danger" onclick="showAmbulanceModal()">呼叫救护车</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="ambulanceModal">
+        <div class="modal-container">
+            <div class="modal-header">
+                <h3 class="modal-title">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="var(--danger-color)" stroke-width="2">
+                        <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+                    </svg>
+                    呼叫救护车
+                </h3>
+                <button class="modal-close" onclick="closeModal('ambulanceModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div style="background-color: rgba(229, 62, 62, 0.2); border-radius: 8px; padding: 16px; margin-bottom: 16px;">
+                    <div style="font-size: 14px; font-weight: bold; color: var(--danger-color); margin-bottom: 8px;">急救电话：120</div>
+                    <div style="font-size: 13px; color: rgba(255, 255, 255, 0.8);">
+                        已自动定位当前位置：XX市XX区XX路XX号（XX化工厂）
+                    </div>
+                </div>
+                <div style="margin-bottom: 16px;">
+                    <div style="font-size: 13px; font-weight: bold; color: white; margin-bottom: 12px;">伤员信息</div>
+                    <div style="background-color: rgba(0, 0, 0, 0.3); border-radius: 8px; padding: 12px;">
+                        <div style="font-size: 12px; color: rgba(255, 255, 255, 0.7); margin-bottom: 8px;">受伤人数：<span style="color: white;">0人</span></div>
+                        <div style="font-size: 12px; color: rgba(255, 255, 255, 0.7);">伤情描述：<span style="color: white;">暂无人员受伤</span></div>
+                    </div>
+                </div>
+                <div style="margin-bottom: 16px;">
+                    <div style="font-size: 13px; font-weight: bold; color: white; margin-bottom: 12px;">附近医院</div>
+                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                        <div style="display: flex; justify-content: space-between; padding: 10px; background-color: rgba(0, 0, 0, 0.2); border-radius: 6px;">
+                            <span style="font-size: 12px; color: white;">XX市第一人民医院</span>
+                            <span style="font-size: 12px; color: var(--info-color);">3.2公里</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; padding: 10px; background-color: rgba(0, 0, 0, 0.2); border-radius: 6px;">
+                            <span style="font-size: 12px; color: white;">XX区中心医院</span>
+                            <span style="font-size: 12px; color: var(--info-color);">5.1公里</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="modal-btn secondary" onclick="closeModal('ambulanceModal')">取消</button>
+                <button class="modal-btn danger" onclick="callAmbulance()">立即拨打120</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="detectionModal">
+        <div class="modal-container">
+            <div class="modal-header">
+                <h3 class="modal-title">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="var(--info-color)" stroke-width="2">
+                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                        <polyline points="22 4 12 14.01 9 11.01"/>
+                    </svg>
+                    实时环境监测
+                </h3>
+                <button class="modal-close" onclick="closeModal('detectionModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="sensor-grid">
+                    <div class="sensor-card">
+                        <div class="sensor-label">氧气浓度</div>
+                        <div class="sensor-value warning" id="detectO2">19.2</div>
+                        <div class="sensor-unit">%</div>
+                        <span class="sensor-status warning">回升中</span>
+                    </div>
+                    <div class="sensor-card">
+                        <div class="sensor-label">一氧化碳</div>
+                        <div class="sensor-value normal" id="detectCO">10</div>
+                        <div class="sensor-unit">ppm</div>
+                        <span class="sensor-status normal">正常</span>
+                    </div>
+                    <div class="sensor-card">
+                        <div class="sensor-label">硫化氢</div>
+                        <div class="sensor-value normal" id="detectH2S">2</div>
+                        <div class="sensor-unit">ppm</div>
+                        <span class="sensor-status normal">正常</span>
+                    </div>
+                    <div class="sensor-card">
+                        <div class="sensor-label">可燃气体</div>
+                        <div class="sensor-value normal" id="detectGas">0.5</div>
+                        <div class="sensor-unit">%LEL</div>
+                        <span class="sensor-status normal">正常</span>
+                    </div>
+                    <div class="sensor-card">
+                        <div class="sensor-label">温度</div>
+                        <div class="sensor-value normal">26</div>
+                        <div class="sensor-unit">°C</div>
+                        <span class="sensor-status normal">正常</span>
+                    </div>
+                    <div class="sensor-card">
+                        <div class="sensor-label">湿度</div>
+                        <div class="sensor-value normal">65</div>
+                        <div class="sensor-unit">%RH</div>
+                        <span class="sensor-status normal">正常</span>
+                    </div>
+                </div>
+                <div style="background-color: rgba(56, 161, 105, 0.2); border-radius: 8px; padding: 16px; text-align: center;">
+                    <div style="font-size: 14px; font-weight: bold; color: var(--success-color);">环境正在改善</div>
+                    <div style="font-size: 12px; color: rgba(255, 255, 255, 0.6); margin-top: 4px;">预计15分钟后可恢复作业</div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="modal-btn secondary" onclick="closeModal('detectionModal')">关闭</button>
+                <button class="modal-btn primary" onclick="refreshDetection()">刷新数据</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="historyModal">
+        <div class="modal-container">
+            <div class="modal-header">
+                <h3 class="modal-title">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="var(--info-color)" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"/>
+                        <polyline points="12 6 12 12 16 14"/>
+                    </svg>
+                    历史监测数据
+                </h3>
+                <button class="modal-close" onclick="closeModal('historyModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="detection-history">
+                    <div class="detection-title">氧气浓度变化趋势</div>
+                    <div class="detection-chart" id="historyChart"></div>
+                </div>
+                <div style="margin-top: 16px;">
+                    <div style="font-size: 13px; font-weight: bold; color: white; margin-bottom: 12px;">异常记录</div>
+                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                        <div style="display: flex; justify-content: space-between; padding: 10px; background-color: rgba(229, 62, 62, 0.2); border-radius: 6px;">
+                            <span style="font-size: 12px; color: white;">10:30:15</span>
+                            <span style="font-size: 12px; color: var(--danger-color);">氧气浓度降至18.5%</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; padding: 10px; background-color: rgba(237, 137, 54, 0.2); border-radius: 6px;">
+                            <span style="font-size: 12px; color: white;">10:35:22</span>
+                            <span style="font-size: 12px; color: var(--warning-color);">氧气浓度回升至19.0%</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; padding: 10px; background-color: rgba(56, 161, 105, 0.2); border-radius: 6px;">
+                            <span style="font-size: 12px; color: white;">10:40:10</span>
+                            <span style="font-size: 12px; color: var(--success-color);">氧气浓度回升至19.2%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="modal-btn secondary" onclick="closeModal('historyModal')">关闭</button>
+                <button class="modal-btn primary" onclick="exportHistory()">导出数据</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="emergencyCallModal">
+        <div class="modal-container">
+            <div class="modal-header">
+                <h3 class="modal-title">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="var(--success-color)" stroke-width="2">
+                        <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+                    </svg>
+                    一键拨打救援电话
+                </h3>
+                <button class="modal-close" onclick="closeModal('emergencyCallModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="contact-list">
+                    <div class="contact-item">
+                        <div class="contact-avatar">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72"/>
+                            </svg>
+                        </div>
+                        <div class="contact-info">
+                            <div class="contact-name">火警电话</div>
+                            <div class="contact-role">消防救援</div>
+                            <div class="contact-phone">119</div>
+                        </div>
+                        <div class="contact-actions">
+                            <button class="contact-action-btn call" onclick="makeCall('119')">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="contact-item">
+                        <div class="contact-avatar">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+                            </svg>
+                        </div>
+                        <div class="contact-info">
+                            <div class="contact-name">急救电话</div>
+                            <div class="contact-role">医疗急救</div>
+                            <div class="contact-phone">120</div>
+                        </div>
+                        <div class="contact-actions">
+                            <button class="contact-action-btn call" onclick="makeCall('120')">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="contact-item">
+                        <div class="contact-avatar">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                                <circle cx="12" cy="7" r="4"/>
+                            </svg>
+                        </div>
+                        <div class="contact-info">
+                            <div class="contact-name">安全主管</div>
+                            <div class="contact-role">刘主管</div>
+                            <div class="contact-phone">138-0000-0001</div>
+                        </div>
+                        <div class="contact-actions">
+                            <button class="contact-action-btn call" onclick="makeCall('13800000001')">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07"/>
+                                </svg>
+                            </button>
+                            <button class="contact-action-btn message" onclick="sendMessage('刘主管')">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="contact-item">
+                        <div class="contact-avatar">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                                <circle cx="12" cy="7" r="4"/>
+                            </svg>
+                        </div>
+                        <div class="contact-info">
+                            <div class="contact-name">总经理</div>
+                            <div class="contact-role">张总</div>
+                            <div class="contact-phone">138-0000-0002</div>
+                        </div>
+                        <div class="contact-actions">
+                            <button class="contact-action-btn call" onclick="makeCall('13800000002')">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07"/>
+                                </svg>
+                            </button>
+                            <button class="contact-action-btn message" onclick="sendMessage('张总')">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="modal-btn secondary" onclick="closeModal('emergencyCallModal')">关闭</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="sendMessageModal">
+        <div class="modal-container">
+            <div class="modal-header">
+                <h3 class="modal-title">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="var(--info-color)" stroke-width="2">
+                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                    </svg>
+                    发送协同信息
+                </h3>
+                <button class="modal-close" onclick="closeModal('sendMessageModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div style="margin-bottom: 16px;">
+                    <div style="font-size: 13px; font-weight: bold; color: white; margin-bottom: 12px;">接收对象</div>
+                    <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                        <label style="display: flex; align-items: center; gap: 6px; padding: 8px 12px; background-color: rgba(0, 0, 0, 0.2); border-radius: 6px; cursor: pointer;">
+                            <input type="checkbox" checked> 安全部门
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 6px; padding: 8px 12px; background-color: rgba(0, 0, 0, 0.2); border-radius: 6px; cursor: pointer;">
+                            <input type="checkbox" checked> 生产部门
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 6px; padding: 8px 12px; background-color: rgba(0, 0, 0, 0.2); border-radius: 6px; cursor: pointer;">
+                            <input type="checkbox" checked> 管理层
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 6px; padding: 8px 12px; background-color: rgba(0, 0, 0, 0.2); border-radius: 6px; cursor: pointer;">
+                            <input type="checkbox"> 全体员工
+                        </label>
+                    </div>
+                </div>
+                <div style="margin-bottom: 16px;">
+                    <div style="font-size: 13px; font-weight: bold; color: white; margin-bottom: 12px;">消息内容</div>
+                    <textarea style="width: 100%; height: 120px; background-color: rgba(0, 0, 0, 0.3); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px; padding: 12px; color: white; font-size: 13px; resize: none;" id="messageContent">【紧急通知】3号储罐区域发生氧气浓度异常，已启动应急响应。请相关部门配合做好应急处置工作，非相关人员请勿靠近事故区域。</textarea>
+                </div>
+                <div>
+                    <div style="font-size: 13px; font-weight: bold; color: white; margin-bottom: 12px;">发送方式</div>
+                    <div style="display: flex; gap: 16px;">
+                        <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;">
+                            <input type="checkbox" checked> 短信
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;">
+                            <input type="checkbox" checked> APP推送
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;">
+                            <input type="checkbox"> 邮件
+                        </label>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="modal-btn secondary" onclick="closeModal('sendMessageModal')">取消</button>
+                <button class="modal-btn primary" onclick="sendEmergencyMessage()">发送</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="broadcastModal">
+        <div class="modal-container">
+            <div class="modal-header">
+                <h3 class="modal-title">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="var(--danger-color)" stroke-width="2">
+                        <polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2"/>
+                        <line x1="12" y1="8" x2="12" y2="12"/>
+                        <line x1="12" y1="16" x2="12.01" y2="16"/>
+                    </svg>
+                    厂区应急广播
+                </h3>
+                <button class="modal-close" onclick="closeModal('broadcastModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="broadcast-content">
+                    <div class="broadcast-text">
+                        紧急通知！3号储罐区域检测到氧气浓度异常，请所有人员立即撤离储罐区A，按照安全路线前往集合点。重复：请所有人员立即撤离储罐区A！
+                    </div>
+                    <div style="margin-top: 12px;">
+                        <div style="font-size: 12px; color: rgba(255, 255, 255, 0.5); margin-bottom: 8px;">广播区域</div>
+                        <div class="broadcast-areas">
+                            <span class="broadcast-area">储罐区A</span>
+                            <span class="broadcast-area">储罐区B</span>
+                            <span class="broadcast-area">生产车间</span>
+                            <span class="broadcast-area">全厂区</span>
+                        </div>
+                    </div>
+                </div>
+                <div style="margin-bottom: 16px;">
+                    <div style="font-size: 13px; font-weight: bold; color: white; margin-bottom: 12px;">广播设置</div>
+                    <div style="display: flex; flex-direction: column; gap: 12px;">
+                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                            <input type="checkbox" checked> 循环播放（每30秒一次）
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                            <input type="checkbox"> 同时触发警报声
+                        </label>
+                    </div>
+                </div>
+                <div style="background-color: rgba(0, 0, 0, 0.3); border-radius: 8px; padding: 12px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span style="font-size: 12px; color: rgba(255, 255, 255, 0.5);">广播状态</span>
+                        <span style="font-size: 12px; color: var(--success-color);">待启动</span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="modal-btn secondary" onclick="closeModal('broadcastModal')">取消</button>
+                <button class="modal-btn danger" onclick="startBroadcast()">启动广播</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="contactWorkersModal">
+        <div class="modal-container">
+            <div class="modal-header">
+                <h3 class="modal-title">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="var(--success-color)" stroke-width="2">
+                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                        <circle cx="9" cy="7" r="4"/>
+                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                        <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                    </svg>
+                    联系作业人员
+                </h3>
+                <button class="modal-close" onclick="closeModal('contactWorkersModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="contact-list">
+                    <div class="contact-item">
+                        <div class="contact-avatar" style="background-color: var(--success-color);">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                                <circle cx="12" cy="7" r="4"/>
+                            </svg>
+                        </div>
+                        <div class="contact-info">
+                            <div class="contact-name">张三</div>
+                            <div class="contact-role">救援组 | 已撤离</div>
+                            <div class="contact-phone">138-0000-0011</div>
+                        </div>
+                        <div class="contact-actions">
+                            <button class="contact-action-btn call" onclick="makeCall('13800000011')">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2"/>
+                                </svg>
+                            </button>
+                            <button class="contact-action-btn message" onclick="sendMessage('张三')">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="contact-item">
+                        <div class="contact-avatar" style="background-color: var(--success-color);">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                                <circle cx="12" cy="7" r="4"/>
+                            </svg>
+                        </div>
+                        <div class="contact-info">
+                            <div class="contact-name">李四</div>
+                            <div class="contact-role">医疗组 | 已撤离</div>
+                            <div class="contact-phone">138-0000-0012</div>
+                        </div>
+                        <div class="contact-actions">
+                            <button class="contact-action-btn call" onclick="makeCall('13800000012')">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2"/>
+                                </svg>
+                            </button>
+                            <button class="contact-action-btn message" onclick="sendMessage('李四')">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="contact-item">
+                        <div class="contact-avatar" style="background-color: var(--warning-color);">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                                <circle cx="12" cy="7" r="4"/>
+                            </svg>
+                        </div>
+                        <div class="contact-info">
+                            <div class="contact-name">王五</div>
+                            <div class="contact-role">安全组 | 撤离中</div>
+                            <div class="contact-phone">138-0000-0013</div>
+                        </div>
+                        <div class="contact-actions">
+                            <button class="contact-action-btn call" onclick="makeCall('13800000013')">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2"/>
+                                </svg>
+                            </button>
+                            <button class="contact-action-btn message" onclick="sendMessage('王五')">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="modal-btn secondary" onclick="closeModal('contactWorkersModal')">关闭</button>
+                <button class="modal-btn primary" onclick="callAllWorkers()">一键通知全员</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="endEmergencyModal">
+        <div class="modal-container">
+            <div class="modal-header">
+                <h3 class="modal-title">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="var(--success-color)" stroke-width="2">
+                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                        <polyline points="22 4 12 14.01 9 11.01"/>
+                    </svg>
+                    结束应急响应
+                </h3>
+                <button class="modal-close" onclick="closeModal('endEmergencyModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div style="background-color: rgba(56, 161, 105, 0.2); border-radius: 8px; padding: 16px; margin-bottom: 16px;">
+                    <div style="font-size: 14px; font-weight: bold; color: var(--success-color); margin-bottom: 8px;">确认结束应急响应？</div>
+                    <div style="font-size: 13px; color: rgba(255, 255, 255, 0.8);">
+                        结束后系统将自动生成应急处置报告，请确认所有处置工作已完成。
+                    </div>
+                </div>
+                <div style="margin-bottom: 16px;">
+                    <div style="font-size: 13px; font-weight: bold; color: white; margin-bottom: 12px;">处置摘要</div>
+                    <div style="background-color: rgba(0, 0, 0, 0.3); border-radius: 8px; padding: 12px;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                            <span style="font-size: 12px; color: rgba(255, 255, 255, 0.5);">响应时长</span>
+                            <span style="font-size: 12px; color: white;">15分钟</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                            <span style="font-size: 12px; color: rgba(255, 255, 255, 0.5);">人员伤亡</span>
+                            <span style="font-size: 12px; color: var(--success-color);">无</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between;">
+                            <span style="font-size: 12px; color: rgba(255, 255, 255, 0.5);">处置结果</span>
+                            <span style="font-size: 12px; color: var(--success-color);">已恢复正常</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="modal-btn secondary" onclick="closeModal('endEmergencyModal')">取消</button>
+                <button class="modal-btn success" onclick="confirmEndEmergency()">确认结束</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast" style="display: none; position: fixed; top: 80px; right: 20px; padding: 12px 20px; background-color: var(--success-color); color: white; border-radius: 6px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3); z-index: 3000;">
+        <span id="toastMessage">操作成功</span>
+    </div>
+
+    <script src="../script.js"></script>
+    <script>
+        checkPagePermission();
+    </script>
+    <script>
+        var records = [];
+        var completedSteps = [];
+
+        document.addEventListener('DOMContentLoaded', function() {
+            updateCurrentTime();
+            setInterval(updateCurrentTime, 1000);
+            initCharts();
+            addRecord('发现异常', '3号储罐氧浓度异常，立即启动应急响应');
+        });
+
+        function updateCurrentTime() {
+            var now = new Date();
+            var options = {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: false
+            };
+            var timeStr = now.toLocaleString('zh-CN', options);
+            document.getElementById('currentTime').textContent = timeStr;
+        }
+
+        function initCharts() {
+            var chart1 = document.getElementById('airQualityChart');
+            var chart2 = document.getElementById('historyChart');
+            if (chart1) renderChart(chart1);
+            if (chart2) renderChart(chart2);
+        }
+
+        function renderChart(container) {
+            var values = [18.5, 18.7, 18.9, 19.0, 19.1, 19.2, 19.2, 19.3, 19.4, 19.5];
+            var labels = ['10:30', '10:32', '10:34', '10:36', '10:38', '10:40', '10:42', '10:44', '10:46', '10:48'];
+            var html = '';
+            for (var i = 0; i < values.length; i++) {
+                var height = Math.round((values[i] / 25) * 100);
+                var barClass = values[i] < 19.5 ? 'danger' : (values[i] < 20 ? 'warning' : '');
+                html += '<div class="detection-bar">' +
+                    '<div class="detection-bar-fill ' + barClass + '" style="height: ' + height + 'px;"></div>' +
+                    '<span class="detection-bar-label">' + labels[i].split(':')[1] + '</span>' +
+                    '</div>';
+            }
+            container.innerHTML = html;
+        }
+
+        function showModal(id) {
+            document.getElementById(id).classList.add('show');
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).classList.remove('show');
+        }
+
+        function showAccidentModal() {
+            showModal('accidentModal');
+            addRecord('查看事故点', '查看3号储罐传感器数据和监控视频');
+        }
+
+        function showPersonnelModal(name) {
+            addRecord('查看人员', '查看' + name + '的位置和状态');
+            showToast('已定位' + name + '的位置');
+        }
+
+        function showEquipmentModal(name) {
+            addRecord('查看设备', '查看' + name + '状态');
+            showToast('已查看' + name + '状态');
+        }
+
+        function showEvacuateModal() {
+            showModal('evacuateModal');
+        }
+
+        function showPersonnelStatusModal() {
+            showModal('personnelStatusModal');
+            addRecord('人员确认', '查看作业人员撤离状态');
+        }
+
+        function showVentilationModal() {
+            showModal('ventilationModal');
+            addRecord('通风控制', '打开通风设备控制面板');
+        }
+
+        function showAirQualityModal() {
+            showModal('airQualityModal');
+            addRecord('空气质量', '查看空气质量监测数据');
+        }
+
+        function showFirstAidModal() {
+            showModal('firstAidModal');
+            addRecord('急救指南', '查看缺氧急救指南');
+        }
+
+        function showAmbulanceModal() {
+            showModal('ambulanceModal');
+        }
+
+        function showDetectionModal() {
+            showModal('detectionModal');
+            addRecord('环境检测', '查看实时环境监测数据');
+        }
+
+        function showHistoryModal() {
+            showModal('historyModal');
+            addRecord('历史数据', '查看历史监测数据');
+        }
+
+        function showEmergencyCallModal() {
+            showModal('emergencyCallModal');
+            addRecord('联系救援', '打开紧急联系电话列表');
+        }
+
+        function showSendMessageModal() {
+            showModal('sendMessageModal');
+            addRecord('发送信息', '打开协同信息发送界面');
+        }
+
+        function showBroadcastModal() {
+            showModal('broadcastModal');
+            addRecord('厂区广播', '打开应急广播系统');
+        }
+
+        function showContactWorkersModal() {
+            showModal('contactWorkersModal');
+            addRecord('联系人员', '查看作业人员联系方式');
+        }
+
+        function showEndEmergencyModal() {
+            showModal('endEmergencyModal');
+        }
+
+        function completeStep(step) {
+            var stepEl = document.getElementById('step' + step);
+            if (stepEl && !stepEl.classList.contains('completed')) {
+                stepEl.classList.add('completed');
+                completedSteps.push(step);
+                addRecord('完成步骤', '完成应急预案第' + step + '步');
+                showToast('已完成第' + step + '步');
+            }
+        }
+
+        function sendEvacuateNotice() {
+            closeModal('evacuateModal');
+            addRecord('撤离通知', '已发送紧急撤离通知');
+            showToast('撤离通知已发送');
+        }
+
+        function confirmAllPersonnel() {
+            closeModal('personnelStatusModal');
+            addRecord('全员确认', '确认所有人员已安全撤离');
+            showToast('全员已确认安全');
+        }
+
+        function toggleVent(btn, name) {
+            var isOn = btn.classList.contains('on');
+            btn.classList.toggle('on');
+            btn.classList.toggle('off');
+            btn.textContent = isOn ? '启动' : '关闭';
+            var statusEl = btn.parentElement.querySelector('.vent-status');
+            statusEl.classList.toggle('on');
+            statusEl.classList.toggle('off');
+            statusEl.textContent = isOn ? '已停止' : '运行中';
+            addRecord('通风设备', (isOn ? '关闭' : '启动') + name);
+        }
+
+        function startAllVent() {
+            addRecord('通风设备', '启动全部通风设备');
+            showToast('已启动全部通风设备');
+        }
+
+        function refreshSensors() {
+            addRecord('刷新数据', '刷新传感器数据');
+            showToast('数据已刷新');
+        }
+
+        function refreshDetection() {
+            addRecord('刷新监测', '刷新环境监测数据');
+            showToast('数据已刷新');
+        }
+
+        function exportHistory() {
+            addRecord('导出数据', '导出历史监测数据');
+            showToast('数据已导出');
+        }
+
+        function makeCall(phone) {
+            addRecord('拨打电话', '拨打' + phone);
+            showToast('正在拨打 ' + phone);
+        }
+
+        function sendMessage(name) {
+            addRecord('发送短信', '向' + name + '发送短信');
+            showToast('短信已发送');
+        }
+
+        function sendEmergencyMessage() {
+            closeModal('sendMessageModal');
+            addRecord('发送信息', '已发送协同信息');
+            showToast('协同信息已发送');
+        }
+
+        function startBroadcast() {
+            closeModal('broadcastModal');
+            addRecord('启动广播', '启动厂区应急广播');
+            showToast('应急广播已启动');
+        }
+
+        function callAllWorkers() {
+            closeModal('contactWorkersModal');
+            addRecord('通知全员', '一键通知所有作业人员');
+            showToast('已通知所有作业人员');
+        }
+
+        function callAmbulance() {
+            addRecord('呼叫救护车', '拨打120急救电话');
+            showToast('正在拨打120');
+        }
+
+        function confirmEndEmergency() {
+            closeModal('endEmergencyModal');
+            addRecord('结束应急', '应急响应结束，环境已恢复正常');
+            document.getElementById('currentStatus').textContent = '已结束';
+            showToast('应急响应已结束');
+        }
+
+        function addRecord(type, text) {
+            var now = new Date();
+            var time = now.toTimeString().split(' ')[0];
+            var record = { time: time, type: type, text: text };
+            records.unshift(record);
+            renderRecords();
+            
+            var textarea = document.getElementById('recordText');
+            if (textarea.value) {
+                textarea.value += '\n';
+            }
+            textarea.value += time + ' [' + type + '] ' + text;
+        }
+
+        function renderRecords() {
+            var container = document.getElementById('recordTimeline');
+            var html = '';
+            for (var i = 0; i < Math.min(records.length, 5); i++) {
+                html += '<div class="record-item">' +
+                    '<span class="record-time">' + records[i].time + '</span>' +
+                    '<span class="record-text">[' + records[i].type + '] ' + records[i].text + '</span>' +
+                    '</div>';
+            }
+            container.innerHTML = html;
+        }
+
+        function showToast(message) {
+            var toast = document.getElementById('toast');
+            document.getElementById('toastMessage').textContent = message;
+            toast.style.display = 'block';
+            setTimeout(function() {
+                toast.style.display = 'none';
+            }, 2000);
+        }
+
+        document.querySelectorAll('.modal-overlay').forEach(function(modal) {
+            modal.addEventListener('click', function(e) {
+                if (e.target === this) {
+                    this.classList.remove('show');
+                }
+            });
+        });
+    </script>
+</body>
+</html>
